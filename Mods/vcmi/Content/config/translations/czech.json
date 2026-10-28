@@ -354,6 +354,7 @@
 	"vcmi.adventureOptions.smoothDragging.help": "{Plynulé posouvání mapy}\n\nPokud je tato možnost aktivována, posouvání mapy bude plynulé.",
 	"vcmi.adventureOptions.smoothDragging.hover": "Plynulé posouvání mapy",
 	"vcmi.artifact.charges": "Použití",
+	"vcmi.artifact.disabledCombination": "Říká se, že jinde lze z tohoto artefaktu a dalších sestavit artefakt „%s“, ale tady nic takového není možné.",
 	"vcmi.battle.action.attack": "Použít útok zblízka",
 	"vcmi.battle.action.attackLongWeapon": "Použít útok dlouhou zbraní",
 	"vcmi.battle.action.genie": "Seslat náhodné podpůrné kouzlo",
