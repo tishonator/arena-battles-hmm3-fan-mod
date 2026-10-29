@@ -33,6 +33,7 @@
 #include "../windows/CHeroOverview.h"
 #include "../windows/CCreatureWindow.h"
 #include "../windows/InfoWindows.h"
+#include "../arena/ArenaWindows.h"
 
 #include "../../lib/CConfigHandler.h"
 #include "../../lib/GameLibrary.h"
@@ -107,7 +108,34 @@ BattleOnlyModeTab::BattleOnlyModeTab()
 
 	heroSelector1->setInputEnabled(GAME->server().isHost());
 
+	// Arena Battles custom: own title and a human / computer switch for player 2 instead of the subtitle
+	if(GAME->server().customArena)
+	{
+		title->setText(arenaText("custom.title", "Custom Arena"));
+		subTitle->setEnabled(false);
+		GAME->server().customArenaComputer = persistentStorage["arenaBattles"]["customPlayer2Computer"].Bool();
+		buttonPlayer2 = std::make_shared<CButton>(Point(0, 50), AnimationPath::builtin("GSPButtonClear"),
+			CButton::tooltip("", arenaText("custom.player2Help", "Switch who controls Player 2")), [this]()
+			{
+				GAME->server().customArenaComputer = !GAME->server().customArenaComputer;
+				Settings stored = persistentStorage.write["arenaBattles"]["customPlayer2Computer"];
+				stored->Bool() = GAME->server().customArenaComputer;
+				setPlayer2ButtonText();
+				redraw();
+			});
+		buttonPlayer2->moveBy(Point(220 - buttonPlayer2->pos.w / 2, 0));
+		setPlayer2ButtonText();
+	}
+
 	onChange();
+}
+
+void BattleOnlyModeTab::setPlayer2ButtonText()
+{
+	if(!buttonPlayer2)
+		return;
+	bool computer = GAME->server().customArenaComputer;
+	buttonPlayer2->setTextOverlay(computer ? arenaText("custom.player2Computer", "Player 2: Computer") : arenaText("custom.player2Human", "Player 2: Human"), EFonts::FONT_SMALL, Colors::WHITE);
 }
 
 void BattleOnlyModeTab::reset()
@@ -968,6 +996,17 @@ void BattleOnlyModeTab::startBattle()
 	auto mapInfo = std::make_shared<CMapInfo>();
 	mapInfo->mapInit("Maps/BattleOnlyMode");
 	GAME->server().setMapInfo(mapInfo);
+	if(GAME->server().customArena)
+	{
+		// both seats start human (hotseat); one click on blue hands player 2 to the computer
+		if(GAME->server().customArenaComputer)
+			GAME->server().setPlayer(PlayerColor(1));
+		// play the battle manually, like the other arena modes
+		Settings quickCombat = settings.write["adventure"]["quickCombat"];
+		quickCombat->Bool() = false;
+		Settings forceQuickCombat = settings.write["adventure"]["forceQuickCombat"];
+		forceQuickCombat->Bool() = false;
+	}
 	ExtraOptionsInfo extraOptions;
 	extraOptions.unlimitedReplay = true;
 	GAME->server().setExtraOptionsInfo(extraOptions);

@@ -4245,6 +4245,11 @@ bool CGameHandler::isBlockedByQueries(const CPackForServer *pack, PlayerColor pl
 	if (dynamic_cast<const SaveLocalState *>(pack) != nullptr)
 		return false;
 
+	// VCMI Arena: in battle-only games the battle starts before the players' interfaces report
+	// that they are ready; this notification only records readiness and is safe during a battle
+	if (dynamic_cast<const AdvInterfaceReady *>(pack) != nullptr)
+		return false;
+
 	auto query = queries->topQuery(player);
 	if (query && query->blocksPack(pack))
 	{

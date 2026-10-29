@@ -4,7 +4,8 @@ on:
     types: [published]
 jobs:
   notify_repos:
-    if: ${{ !github.event.release.prerelease }}
+    # Arena Battles fork: only the official VCMI repository notifies its Homebrew tap
+    if: ${{ github.repository == 'vcmi/vcmi' && !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch only for releases

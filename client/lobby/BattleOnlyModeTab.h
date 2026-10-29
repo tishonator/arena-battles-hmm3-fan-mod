@@ -87,6 +87,7 @@ private:
 
 	std::shared_ptr<CButton> battlefieldSelector;
 	std::shared_ptr<CButton> buttonReset;
+	std::shared_ptr<CButton> buttonPlayer2; // Arena Battles custom: human / computer switch for player 2
 	std::shared_ptr<BattleOnlyModeHeroSelector> heroSelector1;
 	std::shared_ptr<BattleOnlyModeHeroSelector> heroSelector2;
 
@@ -100,6 +101,7 @@ private:
 	void setTerrainButtonText();
 	void selectTerrain();
 	void reset();
+	void setPlayer2ButtonText();
 public:
 	BattleOnlyModeTab();
 	void applyStartInfo(std::shared_ptr<BattleOnlyModeStartInfo> si);

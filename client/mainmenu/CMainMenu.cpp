@@ -41,6 +41,7 @@
 #include "../widgets/VideoWidget.h"
 #include "../windows/InfoWindows.h"
 #include "../windows/wiki/WikiWindow.h"
+#include "../arena/ArenaWindows.h"
 #include "../CServerHandler.h"
 
 #include "../CPlayerInterface.h"
@@ -151,7 +152,7 @@ static std::function<void()> genCommand(CMenuScreen * menu, std::vector<std::str
 {
 	static const std::vector<std::string> commandType = {"to", "campaigns", "start", "load", "exit", "highscores", "wiki"};
 
-	static const std::vector<std::string> gameType = {"single", "multi", "campaign", "tutorial", "battle"};
+	static const std::vector<std::string> gameType = {"single", "multi", "campaign", "tutorial", "battle", "arena", "arenapvp", "customarena"};
 
 	std::list<std::string> commands;
 	boost::split(commands, string, boost::is_any_of("\t "));
@@ -190,6 +191,33 @@ static std::function<void()> genCommand(CMenuScreen * menu, std::vector<std::str
 					return []() { CMainMenu::startTutorial(); };
 				case 4:
 					return []() { CMainMenu::openLobby(ESelectionScreen::newGame, true, {}, ELoadMode::NONE, true); };
+				case 5: // Arena Battles: battle mode with drafted heroes
+					return []()
+					{
+						CMainMenu::openLobby(ESelectionScreen::newGame, true, {}, ELoadMode::NONE, true);
+						GAME->server().arenaMode = true;
+					};
+				case 6: // Arena Battles PvP: two local players (hotseat) draft and fight each other
+					return []()
+					{
+						std::vector<std::string> names = {
+							arenaText("pvp.playerName1", "Player 1"),
+							arenaText("pvp.playerName2", "Player 2")
+						};
+						CMainMenu::openLobby(ESelectionScreen::newGame, true, names, ELoadMode::NONE, true, true);
+						GAME->server().arenaMode = true;
+						GAME->server().arenaPvP = true;
+					};
+				case 7: // Arena Battles custom: VCMI's battle-only setup screen, two local seats (player 2 may be switched to computer)
+					return []()
+					{
+						std::vector<std::string> names = {
+							arenaText("pvp.playerName1", "Player 1"),
+							arenaText("pvp.playerName2", "Player 2")
+						};
+						CMainMenu::openLobby(ESelectionScreen::newGame, true, names, ELoadMode::NONE, true, true);
+						GAME->server().customArena = true;
+					};
 				}
 				break;
 			}

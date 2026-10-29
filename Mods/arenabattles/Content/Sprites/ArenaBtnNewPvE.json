@@ -1,0 +1,21 @@
+{
+	"basepath": "arena/",
+	"images": [
+		{
+			"frame": 0,
+			"file": "ab_ArenaBtnNewPvE_0.png"
+		},
+		{
+			"frame": 1,
+			"file": "ab_ArenaBtnNewPvE_1.png"
+		},
+		{
+			"frame": 2,
+			"file": "ab_ArenaBtnNewPvE_2.png"
+		},
+		{
+			"frame": 3,
+			"file": "ab_ArenaBtnNewPvE_3.png"
+		}
+	]
+}

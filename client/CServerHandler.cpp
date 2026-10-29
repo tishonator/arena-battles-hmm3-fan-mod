@@ -111,6 +111,10 @@ CServerHandler::CServerHandler()
 	, loadMode(ELoadMode::NONE)
 	, hotseatMode(false)
 	, battleMode(false)
+	, arenaMode(false)
+	, arenaPvP(false)
+	, customArena(false)
+	, customArenaComputer(false)
 	, client(nullptr)
 {
 	uuid = boost::uuids::to_string(boost::uuids::random_generator()());
@@ -144,6 +148,10 @@ void CServerHandler::resetStateForLobby(EStartMode mode, ESelectionScreen screen
 	mapToStart = nullptr;
 	hotseatMode = false;
 	battleMode = false;
+	arenaMode = false;
+	arenaPvP = false;
+	customArena = false;
+	customArenaComputer = false;
 	th = std::make_unique<CStopWatch>();
 	logicConnection.reset();
 	si = std::make_shared<StartInfo>();

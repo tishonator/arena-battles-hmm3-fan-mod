@@ -16,6 +16,7 @@
 #include "../GameEngine.h"
 #include "../widgets/TextControls.h"
 #include "../widgets/ObjectLists.h"
+#include "../arena/ArenaWindows.h"
 
 #include "../../lib/GameLibrary.h"
 #include "../../lib/filesystem/Filesystem.h"
@@ -79,6 +80,13 @@ CreditsScreen::CreditsScreen(Rect rect)
 	});
 
 	text = "{- " + LIBRARY->generaltexth->translate("vcmi.credits.vcmi") + " -}\r\n" + contributorsText + "\r\n\r\n{" + LIBRARY->generaltexth->translate("vcmi.credits.website") + ":}\r\nhttps://vcmi.eu\r\n\r\n\r\n\r\n\r\n{- " + LIBRARY->generaltexth->translate("vcmi.credits.heroes") + " -}\r\n\r\n\r\n" + text;
+	// Arena Battles: the mod's own credits come first (text from the mod's translation file)
+	std::string arenaCredits = arenaText("credits.text", "");
+	if(!arenaCredits.empty())
+	{
+		boost::replace_all(arenaCredits, "\n", "\r\n");
+		text = arenaCredits + "\r\n\r\n\r\n\r\n\r\n" + text;
+	}
 	credits = std::make_shared<CMultiLineLabel>(Rect(pos.w - 350, 0, 350, 600), FONT_CREDITS, ETextAlignment::CENTER, Colors::WHITE, text);
 	credits->scrollTextTo(-600); // move all text below the screen
 }

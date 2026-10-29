@@ -487,7 +487,8 @@ CLevelWindow::CLevelWindow(const CGHeroInstance * hero, PrimarySkill pskill, std
 {
 	OBJECT_CONSTRUCTION;
 
-	GAME->interface()->showingDialog->setBusy();
+	if(GAME->interface())
+		GAME->interface()->showingDialog->setBusy();
 
 	sortedSkills = skills;
 	std::sort(sortedSkills.begin(), sortedSkills.end(), [hero](auto a, auto b) {
@@ -517,7 +518,8 @@ CLevelWindow::CLevelWindow(const CGHeroInstance * hero, PrimarySkill pskill, std
 
 	portrait = std::make_shared<CHeroArea>(170, 66, hero);
 	portrait->addClickCallback(nullptr);
-	portrait->addRClickCallback([hero](){ ENGINE->windows().createAndPushWindow<CRClickPopupInt>(std::make_shared<CHeroWindow>(hero)); });
+	if(GAME->interface())
+		portrait->addRClickCallback([hero](){ ENGINE->windows().createAndPushWindow<CRClickPopupInt>(std::make_shared<CHeroWindow>(hero)); });
 	ok = std::make_shared<CButton>(Point(297, 413), AnimationPath::builtin("IOKAY"), CButton::tooltip(), std::bind(&CLevelWindow::close, this), EShortcut::GLOBAL_ACCEPT);
 
 	//%s has gained a level.
@@ -600,9 +602,13 @@ void CLevelWindow::close()
 		cb(std::distance(skills.begin(), it));
 	}
 
-	GAME->interface()->showingDialog->setFree();
+	if(GAME->interface())
+		GAME->interface()->showingDialog->setFree();
 
+	auto closedCallback = onClosed;
 	CWindowObject::close();
+	if(closedCallback)
+		closedCallback();
 }
 
 CTavernWindow::CTavernWindow(const CGObjectInstance * TavernObj, const std::function<void()> & onWindowClosed)

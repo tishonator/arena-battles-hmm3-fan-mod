@@ -144,6 +144,10 @@ public:
 	ELoadMode loadMode; // For saves filtering in SelectionTab
 	bool hotseatMode;
 	bool battleMode;
+	bool arenaMode; // Arena Battles: battle mode where both heroes are drafted
+	bool arenaPvP; // Arena Battles: both heroes are drafted by local players (hotseat)
+	bool customArena; // Arena Battles: battle-only setup screen, player 2 human or computer
+	bool customArenaComputer; // Arena Battles: player 2 of the custom arena is played by the computer
 	////////////////////
 
 	std::unique_ptr<CStopWatch> th;

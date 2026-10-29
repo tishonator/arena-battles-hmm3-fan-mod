@@ -168,6 +168,9 @@ class CLevelWindow : public CWindowObject
 public:
 	CLevelWindow(const CGHeroInstance *hero, PrimarySkill pskill, std::vector<SecondarySkill> &skills, std::function<void(ui32)> callback);
 
+	/// Arena Battles: called after the window was closed (the window is also used outside of a game)
+	std::function<void()> onClosed;
+
 	void close() override;
 };
 

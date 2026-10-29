@@ -6,6 +6,9 @@ on:
       - beta
       - master
       - develop
+      - arena-battles
+    tags:
+      - 'v*'        # Arena Battles: a version tag (e.g. v0.5.0) builds all platforms and drafts a GitHub Release
   pull_request:
   workflow_dispatch:
 
@@ -873,3 +876,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 CI/final_summary.py
+
+  # Arena Battles: a version tag (e.g. v0.5.0) collects the packages of all platforms into a draft GitHub Release
+  release:
+    name: Draft GitHub Release
+    needs: [build, windows-installer]
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+          pattern: ArenaBattles-*
+
+      - name: Collect release files
+        run: |
+          mkdir -p release
+          # installers and packages only: no debug symbols, Android bundles or Lobby server packages
+          find artifacts -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.apk' -o -name '*.ipa' \) \
+            ! -path '*symbols*' ! -path '*-aab/*' ! -path '*lobby*' -exec cp {} release/ \;
+          ls -la release
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Arena Battles ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release/*

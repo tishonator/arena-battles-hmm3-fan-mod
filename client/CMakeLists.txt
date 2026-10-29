@@ -52,6 +52,9 @@ set(vcmiclientcommon_SRCS
 	gui/ShortcutHandler.cpp
 	gui/WindowHandler.cpp
 
+	arena/ArenaDraft.cpp
+	arena/ArenaWindows.cpp
+
 	lobby/BattleOnlyModeTab.cpp
 	lobby/CBonusSelection.cpp
 	lobby/CCampaignInfoScreen.cpp
@@ -279,6 +282,9 @@ set(vcmiclientcommon_HEADERS
 	gui/ShortcutHandler.h
 	gui/TextAlignment.h
 	gui/WindowHandler.h
+
+	arena/ArenaDraft.h
+	arena/ArenaWindows.h
 
 	lobby/BattleOnlyModeTab.h
 	lobby/CBonusSelection.h

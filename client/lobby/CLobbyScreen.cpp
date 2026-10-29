@@ -17,6 +17,7 @@
 #include "RandomMapTab.h"
 #include "SelectionTab.h"
 #include "BattleOnlyModeTab.h"
+#include "../arena/ArenaDraft.h"
 
 #include "../CServerHandler.h"
 #include "../GameEngine.h"
@@ -393,6 +394,26 @@ void CLobbyScreen::updateAfterStateChange()
 
 		if(GAME->server().battleMode)
 			toggleTab(tabBattleOnlyMode);
+	}
+
+	// Arena Battles custom: only the battle setup is used - hide scenario selection and player options
+	// (the player 2 human / computer switch replaces the options tab)
+	if(GAME->server().customArena)
+	{
+		for(const auto & button : {buttonSelect, buttonRMG, buttonBattleMode, buttonOptions})
+			if(button)
+				button->disable();
+	}
+
+	// Arena Battles: run the hero draft instead of the battle setup screen
+	if(GAME->server().arenaMode && !arenaDraft && GAME->server().isHost())
+	{
+		arenaDraft = std::make_shared<ArenaDraft>([this]()
+		{
+			GAME->server().sendClientDisconnecting();
+			close();
+		}, GAME->server().arenaPvP);
+		ENGINE->dispatchMainThread([draft = arenaDraft]() { draft->start(); });
 	}
 
 	if(GAME->server().isHost() && screenType == ESelectionScreen::newGame)

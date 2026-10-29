@@ -1,6 +1,7 @@
 dic = {
-    "applicationIdSuffix": ".daily",
-    "applicationLabel": "VCMI daily",
+    # Arena Battles: own app id and name, so it installs next to the official VCMI apps
+    "applicationIdSuffix": ".arenabattles",
+    "applicationLabel": "Arena Battles",
     "applicationVariant": "daily",
     "signingConfig": "dailySigning",
 }

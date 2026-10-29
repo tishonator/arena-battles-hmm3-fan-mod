@@ -520,6 +520,10 @@ ModManager::ModManager(const JsonNode & repositoryList)
 	eraseMissingModsFromPreset();
 	addNewModsToPreset();
 
+	// Arena Battles: this engine build exists to run the Arena Battles mod - keep it enabled whenever it is installed
+	if(vstd::contains(getInstalledValidMods(), TModID("arenabattles")))
+		modsPreset->setModActive("arenabattles", true);
+
 	std::vector<TModID> desiredModList = modsPreset->getActiveMods();
 	ModDependenciesResolver newResolver(desiredModList, *modsStorage);
 	updatePreset(newResolver);

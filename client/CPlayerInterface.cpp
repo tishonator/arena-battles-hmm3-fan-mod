@@ -678,7 +678,8 @@ void CPlayerInterface::battleStart(const BattleID & battleID, const CCreatureSet
 {
 	EVENT_HANDLER_CALLED_BY_CLIENT;
 
-	bool useQuickCombat = settings["adventure"]["quickCombat"].Bool() || GAME->map().getMap()->battleOnly;
+	// Arena Battles: the arena battle is always a standard (manual) battle
+	bool useQuickCombat = settings["adventure"]["quickCombat"].Bool() || (GAME->map().getMap()->battleOnly && !GAME->server().arenaMode && !GAME->server().customArena);
 	bool forceQuickCombat = settings["adventure"]["forceQuickCombat"].Bool();
 
 	if ((replayAllowed && useQuickCombat) || forceQuickCombat)

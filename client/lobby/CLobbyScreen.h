@@ -13,6 +13,7 @@
 
 class CBonusSelection;
 class GraphicalPrimitiveCanvas;
+class ArenaDraft;
 
 class CLobbyScreen final : public CSelectionBase
 {
@@ -27,6 +28,9 @@ public:
 	void toggleChat();
 
 	void updateAfterStateChange();
+
+	/// Arena Battles: hero draft running on top of this lobby (arena mode only)
+	std::shared_ptr<ArenaDraft> arenaDraft;
 	void onRemoteClientLobbyStateChanged();
 
 	const CMapInfo * getMapInfo() final;
