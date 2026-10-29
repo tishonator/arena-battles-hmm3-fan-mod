@@ -23,7 +23,7 @@ jobs:
       matrix:
         include:
           - platform: mac-intel
-            os: macos-15
+            os: macos-15-intel    # Arena Battles: native Intel runner, so it doesn't queue for the busy arm64 macOS pool
             pack: 1
             upload: 1
             pack_type: Release
