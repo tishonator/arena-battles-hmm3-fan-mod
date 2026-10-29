@@ -702,7 +702,8 @@ jobs:
 
   windows-installer:
     needs: build
-    if: ${{ needs.build.result == 'success' }}
+    # Arena Battles: also run when an unrelated platform failed (missing Windows packages make this job fail on its own)
+    if: ${{ !cancelled() }}
     name: Create Windows Installer (${{ matrix.arch }})
     strategy:
       matrix:
@@ -877,11 +878,11 @@ jobs:
         run: |
           python3 CI/final_summary.py
 
-  # Arena Battles: a version tag (e.g. v0.5.0) collects the packages of all platforms into a draft GitHub Release
+  # Arena Battles: a version tag (e.g. v0.5.0) publishes a GitHub Release with the packages of every platform that built
   release:
-    name: Draft GitHub Release
+    name: GitHub Release
     needs: [build, windows-installer]
-    if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.build.result == 'success' }}
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -900,10 +901,31 @@ jobs:
             ! -path '*symbols*' ! -path '*-aab/*' ! -path '*lobby*' -exec cp {} release/ \;
           ls -la release
 
-      - name: Create draft release
+      - name: Write release notes
+        run: |
+          cat > notes.md <<'NOTES'
+          **Arena Battles: A HoMM3 Fan Mod**: draft a hero, build an army, fight one battle. Play PvE against the computer, PvP hotseat, or the Custom Arena sandbox.
+
+          ### Downloads
+          | System | File |
+          | --- | --- |
+          | Windows | `*-windows-*.exe` (installer) or `*-msvc-*.zip` (portable) |
+          | macOS | `*.dmg` (Apple Silicon `mac-arm`, Intel `mac-intel`) |
+          | Linux | `*.AppImage` |
+          | Android | `*.apk` |
+          | iOS / iPadOS | `*.ipa` (sideload) |
+
+          **You need your own copy of Heroes of Might and Magic III (Complete or Shadow of Death).** No original game files are included.
+          Full install guide: https://github.com/tishonator/arena-battles-hmm3-fan-mod#installation
+
+          Enjoying the mod? Subscribe to **TishGamer** on YouTube: https://www.youtube.com/@TishGamer
+          NOTES
+          sed -i 's/^          //' notes.md
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
           name: Arena Battles ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: notes.md
           files: release/*
+          fail_on_unmatched_files: false

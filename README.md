@@ -50,7 +50,7 @@
 ## Game modes
 
 | Menu item | What it is |
-|---|---|
+| --- | --- |
 | **New Arena PvE** | You draft a hero and army. The computer drafts its own, then you fight it. |
 | **New Arena PvP** | Two players take turns drafting on the same computer (Player 1, then Player 2). Then they fight each other in hotseat. |
 | **Custom Arena** | A sandbox. Pick both heroes, their skills, artifacts and **any creatures in any amounts**. Player 2 can be a **Human** or the **Computer**. It is good for testing formations, "creature vs creature" match-ups and theory-crafting. |
@@ -64,8 +64,8 @@
 4. **Artifacts.** There are 9 screens, and on each you take 1 of 3 artifacts. Then you **arrange** them on your hero's paper doll.
 5. **Creatures.** There are 7 screens, one for each creature level, and on each you take 1 of 3 stacks. Stack sizes depend on the level:
 
-   | Level | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-   |---|---|---|---|---|---|---|---|
+   | Level  | 1      | 2     | 3     | 4     | 5     | 6    | 7   |
+   | ------ | ------ | ----- | ----- | ----- | ----- | ---- | --- |
    | Amount | 90-110 | 30-40 | 20-25 | 14-18 | 11-13 | 9-10 | 7-8 |
 
 6. **Confirm.** Review your hero and see your opponent's hero. Then press **Begin**.
@@ -74,7 +74,7 @@
 ## Screenshots
 
 | | |
-|---|---|
+| --- | --- |
 | ![Choose a hero](arena-battles/screenshots/choose-hero.png) **Choose 1 of 3 heroes** | ![Level up](arena-battles/screenshots/level-up.png) **Level up to 25** |
 | ![Choose a spell](arena-battles/screenshots/choose-spell.png) **Draft spells** | ![Choose an artifact](arena-battles/screenshots/choose-artifact.png) **Draft artifacts** |
 | ![Arrange artifacts](arena-battles/screenshots/arrange-artifacts.png) **Arrange your artifacts** | ![Choose creatures](arena-battles/screenshots/choose-creatures.png) **Draft creatures** |
@@ -107,7 +107,7 @@ Arena Battles uses the same game data as VCMI. **If you already play VCMI on a c
 Go to **[Releases](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases)** and download the file for your system:
 
 | System | File | Notes |
-|---|---|---|
+| --- | --- | --- |
 | Windows 10/11 (64-bit) | `ArenaBattles-<version>-windows-x64.exe` (installer) or `.zip` (portable) | Also built for x86 and ARM64 |
 | macOS (Apple Silicon) | `ArenaBattles-<version>-macos-arm.dmg` | |
 | macOS (Intel) | `ArenaBattles-<version>-macos-intel.dmg` | |
@@ -185,7 +185,7 @@ For more help with the game data, see the official VCMI guides. Arena Battles us
 ### Troubleshooting
 
 | Problem | Fix |
-|---|---|
+| --- | --- |
 | "Heroes III data files are missing" | The launcher can't find `Data`, `Maps` and `Mp3`. Run the launcher's setup wizard again (*Settings → Run setup wizard*) and point it at a *Complete* or *SoD* install. |
 | The normal VCMI menu appears instead of Arena Battles | You started the official VCMI, not Arena Battles. Use the **VCMI Arena Battles** shortcut. |
 | The game starts in a small window | Change the resolution and fullscreen settings in the launcher (*Settings*) or in-game (*Esc → System options*). |
@@ -231,7 +231,7 @@ python arena-battles/tools/preview.py         # optional: renders a menu preview
 ## Repository layout
 
 | Path | What's inside |
-|---|---|
+| --- | --- |
 | `Mods/arenabattles/` | **The mod:** `mod.json`, main menu layout, texts (`Content/config/arenabattles/english.json`) and graphics |
 | `client/arena/` | The draft screens and logic (hero, level-up, spell, artifact and creature picks; AI drafting) |
 | `client/mainmenu/`, `client/lobby/`, … | Small engine hooks: menu commands, PvP hotseat, Custom Arena, credits |
