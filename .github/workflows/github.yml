@@ -22,6 +22,8 @@ jobs:
   build:
     name: Build (${{ matrix.platform }})
     strategy:
+      # Arena Battles: one failing platform must not cancel the others
+      fail-fast: false
       matrix:
         include:
           - platform: mac-intel
@@ -902,6 +904,8 @@ jobs:
           find artifacts -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.apk' -o -name '*.ipa' \) \
             ! -path '*symbols*' ! -path '*-aab/*' ! -path '*lobby*' -exec cp {} release/ \;
           ls -la release
+          # never publish a release without downloads
+          if [ -z "$(ls -A release)" ]; then echo "::error::No platform built successfully - release not published"; exit 1; fi
 
       - name: Write release notes
         run: |

@@ -283,7 +283,7 @@ namespace
 	ArenaOffer skillOffer(SecondarySkill skillId)
 	{
 		// the hero gets the skill at Basic and reaches Expert during the automatic level-ups, so Expert is shown
-		constexpr int EXPERT = 3;
+		static constexpr int EXPERT = 3; // static: GCC/Clang require it to be usable inside the lambdas below
 		const CSkill * skill = skillId.toSkill();
 		ArenaOffer offer;
 		offer.description = skill->getNameTranslated();
