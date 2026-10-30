@@ -4,7 +4,7 @@
  * License: GNU General Public License v2.0 or later
  * Full text of license available in license.txt file, in main folder
  *
- * Arena mode: both sides draft a hero (hero, level-ups, spells, artifacts, army),
+ * Arena mode: both sides draft a hero (hero, battle skills, automatic level-ups, spells, artifacts, army),
  * then a single hero-vs-hero battle is started. The battle ends the game.
  */
 #pragma once
@@ -29,6 +29,7 @@ void arenaSafeCall(const std::function<void()> & action);
 namespace ArenaRules
 {
 	constexpr int TARGET_LEVEL = 25;
+	constexpr int SKILL_SLOTS = 8;  // secondary skills a hero can have; the free ones are drafted
 	constexpr int SPELL_PICKS = 9;
 	constexpr int ARTIFACT_PICKS = 9;
 	constexpr int CREATURE_LEVELS = 7;
@@ -38,6 +39,8 @@ namespace ArenaRules
 	std::pair<int, int> creatureAmount(int level);
 
 	std::vector<HeroTypeID> heroPool();
+	std::vector<SecondarySkill> skillPool();   // secondary skills that do something in a single battle
+	bool isBattleSkill(SecondarySkill skill);
 	std::vector<SpellID> spellPool();          // combat spells, levels 1-5
 	std::vector<ArtifactID> artifactPool();    // hero artifacts that do something in battle
 	std::vector<CreatureID> creaturePool(int level); // town creatures (basic + upgraded) of all factions
@@ -110,6 +113,7 @@ private:
 
 	// player steps
 	void stepChooseHero();
+	void stepSkill();
 	void stepLevelUp();
 	void stepSpell();
 	void stepArtifact();
@@ -118,13 +122,10 @@ private:
 	void stepConfirm();
 
 	// shared logic
-	struct LevelUpRoll
-	{
-		PrimarySkill primary;
-		std::vector<SecondarySkill> choices;
-	};
-	LevelUpRoll rollLevelUp(ArenaSide & side);
-	void applyLevelUp(ArenaSide & side, const LevelUpRoll & roll, int choice);
+	std::vector<SecondarySkill> offerSkills(const ArenaSide & side);
+	void giveSkill(ArenaSide & side, SecondarySkill skill);
+	/// levels the hero up to TARGET_LEVEL: primary skills as in H3, drafted skills are upgraded to Expert
+	void autoLevelUp(ArenaSide & side);
 	std::vector<SpellID> offerSpells(const ArenaSide & side);
 	std::vector<ArtifactID> offerArtifacts(const ArenaSide & side);
 	std::vector<std::pair<CreatureID, int>> offerCreatures(int level);

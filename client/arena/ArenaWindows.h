@@ -112,7 +112,8 @@ public:
 	{
 		ARRANGE,  // after the artifact picks: move artifacts between slots and backpack
 		VIEW,     // opened from a choice screen: arranging allowed, just closes
-		CONFIRM   // final screen: "Begin" starts the battle, can also show the enemy hero
+		LEVELED,  // after the automatic level-ups: shows the hero at level 25, "Done" continues the draft
+		CONFIRM  // final screen: "Begin" starts the battle, can also show the enemy hero
 	};
 
 private:

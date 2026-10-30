@@ -12,8 +12,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Arena Battles: one build per commit - pushing a release tag for a commit cancels its branch build
+# (both would build the same code and compete for the few macOS runners)
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +25,7 @@ jobs:
       matrix:
         include:
           - platform: mac-intel
-            os: macos-15-intel    # Arena Battles: native Intel runner, so it doesn't queue for the busy arm64 macOS pool
+            os: macos-15
             pack: 1
             upload: 1
             pack_type: Release

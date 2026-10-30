@@ -2,10 +2,17 @@
 
 **Draft a hero, build an army, fight one battle.** Arena Battles is a fan-made arena mode for *Heroes of Might and Magic III*, built on the open-source [VCMI](https://vcmi.eu/) engine. There is no map and no economy, and you won't wait 100 turns. You pick a hero, draft skills, spells, artifacts and creatures one screen at a time, and then everything comes down to one battle.
 
-> **Made by [Tihomir Ivanov](#about-the-author) – [TishGamer on YouTube](https://www.youtube.com/@TishGamer).**
-> If you like the mod, **[subscribe to the channel](https://www.youtube.com/@TishGamer?sub_confirmation=1)**. It's the best way to support the work.
+**⬇️ [Download the latest release (v0.6.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
+
+> [!CAUTION]
+> **You need your own copy of *Heroes of Might and Magic III: Complete* or *Shadow of Death*.**
+> **The Steam *HD Edition* on its own will NOT work.** Arena Battles contains no original game files.
+> The easiest option is *HoMM3 Complete* from [GOG](https://www.gog.com/game/heroes_of_might_and_magic_3_complete_edition). See [how to use your game files](#1-before-you-start-the-original-game-data) (including on Android) **before you download**.
 
 ![Main menu](arena-battles/screenshots/main-menu.png)
+
+> **Made by [Tihomir Ivanov](#about-the-author) – [TishGamer on YouTube](https://www.youtube.com/@TishGamer).**
+> If you like the mod, **[subscribe to the channel](https://www.youtube.com/@TishGamer?sub_confirmation=1)**. It's the best way to support the work.
 
 ---
 
@@ -14,6 +21,7 @@
 - [Features](#features)
 - [Game modes](#game-modes)
 - [How a draft works](#how-a-draft-works)
+  - [Choosing your skills](#choosing-your-skills)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
   - [Before you start: the original game data](#1-before-you-start-the-original-game-data)
@@ -40,7 +48,8 @@
   - **PvE** draft against the computer;
   - **PvP** hotseat for two players on one computer;
   - **Custom Arena**, where you set up both sides by hand.
-- **A full draft in about 10 minutes.** Pick 1 of 3 heroes, level them to 25, then choose 9 spells, 9 artifacts and 7 creature stacks, always from 3 random offers.
+- **A full draft in about 10 minutes.** Pick 1 of 3 heroes and fill all 8 skill slots with **battle skills only**. Your hero then jumps to level 25 with every skill at Expert. Then choose 9 spells, 9 artifacts and 7 creature stacks. Every pick is 1 of 3 random offers.
+- **No useless skills.** You'll never be offered Estates, Scouting, Navigation or other skills that do nothing in a single battle.
 - **A smart AI opponent.** In PvE, the computer drafts the same way you do and always takes the strongest offer.
 - **Fair fights.** Quick combat is off, both sides get the same number of picks, and the battlefield is random.
 - **Original HoMM3 look and feel.** The mod runs on your own copy of the game data, so it has the classic creatures, spells, artifacts, music and battle screen.
@@ -59,28 +68,50 @@
 ## How a draft works
 
 1. **Choose your hero.** You get 1 of 3 random heroes. Every hero starts with a spell book.
-2. **Level up to 25.** At each level-up you choose a primary skill bonus and a secondary skill, like in the original game.
-3. **Spells.** There are 9 screens, and on each you take 1 of 3 spells.
-4. **Artifacts.** There are 9 screens, and on each you take 1 of 3 artifacts. Then you **arrange** them on your hero's paper doll.
-5. **Creatures.** There are 7 screens, one for each creature level, and on each you take 1 of 3 stacks. Stack sizes depend on the level:
+2. **Choose your skills.** A hero has 8 skill slots, and you fill them one screen at a time, taking 1 of 3 skills each time.
+   - Only skills that matter in a battle are offered: Offense, Armorer, Archery, Resistance, Tactics, Leadership, Luck, Intelligence, Sorcery, and Air, Earth, Fire and Water Magic.
+   - Skills the hero starts with stay if they're battle skills; any others are removed, so every hero gets 6-8 skill picks.
+3. **Level 25, automatically.** Your hero levels up to 25 right away. Attack, Defense, Power and Knowledge grow the way they do for the hero's class in the original game, and **all your skills become Expert**. A summary screen shows the result.
+4. **Spells.** There are 9 screens, and on each you take 1 of 3 spells.
+5. **Artifacts.** There are 9 screens, and on each you take 1 of 3 artifacts. Then you **arrange** them on your hero's paper doll.
+6. **Creatures.** There are 7 screens, one for each creature level, and on each you take 1 of 3 stacks. Stack sizes depend on the level:
 
    | Level  | 1      | 2     | 3     | 4     | 5     | 6    | 7   |
    | ------ | ------ | ----- | ----- | ----- | ----- | ---- | --- |
    | Amount | 90-110 | 30-40 | 20-25 | 14-18 | 11-13 | 9-10 | 7-8 |
 
-6. **Confirm.** Review your hero and see your opponent's hero. Then press **Begin**.
-7. **Fight!** One battle on a random battlefield decides the winner, and then the game ends.
+7. **Confirm.** Review your hero and see your opponent's hero. Then press **Begin**.
+8. **Fight!** One battle on a random battlefield decides the winner, and then the game ends.
+
+### Choosing your skills
+
+In the original game, level-ups offer random skills, so you could end up with Estates, Scouting or Navigation, which do nothing in a single battle. Arena Battles gives you **8 skill screens instead**. Each one offers **3 random battle skills**, and you pick the one you want:
+
+![Choose a skill: three battle skills to pick from](arena-battles/screenshots/choose-skill.png)
+
+- **The skill pool (13 skills):**
+  - Offense, Armorer, Archery, Resistance, Tactics, Leadership and Luck;
+  - Intelligence and Sorcery;
+  - Air, Earth, Fire and Water Magic.
+- **Each skill can only be picked once.** Skills you already have aren't offered again.
+- **Starting skills:** if your hero starts with battle skills (for example Offense), they stay and fill a slot. Non-battle starting skills are removed. Most heroes get 6-8 picks.
+- **Every skill becomes Expert.** The card shows what the skill does at Expert level, and right-clicking a card shows its full description.
+- **Plan around your spells:** a magic school (Air, Earth, Fire, Water) makes its spells cheaper and stronger, Sorcery adds spell damage, and Intelligence doubles your spell points.
+
+When all slots are full, your hero **levels up to 25 automatically**, and you see the result before the spell draft starts:
+
+![Your hero at level 25 with 8 Expert battle skills](arena-battles/screenshots/hero-level-25.png)
+
+The computer opponent drafts its skills the same way and picks the most useful skill for battle. In PvP, each player drafts their own skills.
 
 ## Screenshots
 
 | | |
 | --- | --- |
-| ![Choose a hero](arena-battles/screenshots/choose-hero.png) **Choose 1 of 3 heroes** | ![Level up](arena-battles/screenshots/level-up.png) **Level up to 25** |
+| ![Choose a hero](arena-battles/screenshots/choose-hero.png) **Choose 1 of 3 heroes** | ![Battle](arena-battles/screenshots/battle.png) **One battle decides it** |
 | ![Choose a spell](arena-battles/screenshots/choose-spell.png) **Draft spells** | ![Choose an artifact](arena-battles/screenshots/choose-artifact.png) **Draft artifacts** |
 | ![Arrange artifacts](arena-battles/screenshots/arrange-artifacts.png) **Arrange your artifacts** | ![Choose creatures](arena-battles/screenshots/choose-creatures.png) **Draft creatures** |
 | ![Hero confirm](arena-battles/screenshots/hero-confirm.png) **Confirm and begin** | ![Custom Arena](arena-battles/screenshots/custom-arena.png) **Custom Arena sandbox** |
-
-![Battle](arena-battles/screenshots/battle.png)
 
 ---
 
@@ -90,30 +121,42 @@ Arena Battles is a **standalone app**. It ships as its own build of the VCMI eng
 
 ### 1. Before you start: the original game data
 
-> **Arena Battles does not include any Heroes of Might and Magic III files. You need your own legal copy of the game.**
+> [!CAUTION]
+> **Arena Battles does not include any Heroes of Might and Magic III files. You need your own legal copy of *HoMM3 Complete* or *Shadow of Death*.**
+> **The Steam *HD Edition* on its own will NOT work**, because it doesn't contain the files Arena Battles needs. If you only own the HD Edition, get *HoMM3 Complete* (for example from GOG) first.
 
-Any of these works:
+**These versions work:**
 
-- *Heroes of Might and Magic III: Complete* (for example from [GOG](https://www.gog.com/game/heroes_of_might_and_magic_3_complete_edition));
-- *Shadow of Death*;
-- the original CD version with both expansions.
+- ✅ *Heroes of Might and Magic III: Complete*, for example from [GOG](https://www.gog.com/game/heroes_of_might_and_magic_3_complete_edition) (recommended, the easiest on every platform);
+- ✅ *Shadow of Death*;
+- ✅ the original CD version with both expansions.
+- ❌ **Steam *HD Edition* alone does not work.**
 
-The **HD Edition** (Steam) is **not** enough on its own. VCMI needs the files from *Complete* or *SoD*.
+**What you need from it:** only three folders of your installed game: **`Data`**, **`Maps`** and **`Mp3`**. Here is a GOG install of *HoMM3 Complete* on Windows as an example:
+
+![Example: the HoMM3 Complete (GOG) install folder with the Data, Maps and Mp3 folders highlighted](arena-battles/screenshots/homm3-install-folder.png)
+
+**How to give Arena Battles your game files.** On first start, the setup wizard asks for them:
+
+- **Windows, macOS, Linux:** point the wizard at your HoMM3 install folder (the one shown above). Or give it the GOG **offline installer** (see below) and it unpacks the files for you.
+- **Android and iOS:** you can't install the GOG game on a phone, so use one of these:
+  1. **GOG offline installer (no PC install needed).** In your GOG library on [gog.com](https://www.gog.com/), open *HoMM3 Complete*, go to the offline backup installers, and download the Windows installer files. That's `setup_heroes_of_might_and_magic_3_complete_*.exe`, plus a `.bin` file if there is one. Copy them to your phone into the same folder. In the Arena Battles setup wizard, choose to import from the GOG installer and select the `.exe`.
+  2. **Copy the folders from a PC.** Copy `Data`, `Maps` and `Mp3` from a computer install to your phone (USB cable or cloud storage), then select that folder in the setup wizard.
 
 Arena Battles uses the same game data as VCMI. **If you already play VCMI on a computer, Arena Battles will find your data automatically.**
 
 ### 2. Download
 
-Go to **[Releases](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases)** and download the file for your system:
+Open the **[latest release (v0.6.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.6.0`):
 
 | System | File | Notes |
 | --- | --- | --- |
-| Windows 10/11 (64-bit) | `ArenaBattles-<version>-windows-x64.exe` (installer) or `.zip` (portable) | Also built for x86 and ARM64 |
-| macOS (Apple Silicon) | `ArenaBattles-<version>-macos-arm.dmg` | |
-| macOS (Intel) | `ArenaBattles-<version>-macos-intel.dmg` | |
-| Linux (x86-64) | `ArenaBattles-<version>.AppImage` | Works on most distributions |
-| Android 5.0+ | `ArenaBattles-<version>.apk` | |
-| iOS / iPadOS | `ArenaBattles-<version>.ipa` | Needs sideloading, see below |
+| Windows 10/11 (64-bit) | `ArenaBattles-<version>-x64.exe` (installer) or `ArenaBattles-<version>-x64.zip` (portable) | Also `-x86` (32-bit) and `-arm64` versions |
+| macOS (Apple Silicon) | `ArenaBattles-<version>-arm.dmg` | |
+| macOS (Intel) | `ArenaBattles-<version>-intel.dmg` | When available for that release |
+| Linux | `ArenaBattles-<version>-x86_64.AppImage` or `-arm64.AppImage` | Works on most distributions |
+| Android 5.0+ | `ArenaBattles-<version>-arm64-v8a.apk` | Most phones. Older 32-bit phones: `-armeabi-v7a.apk`; x86-64 devices and emulators: `-x64.apk` |
+| iOS / iPadOS | `ArenaBattles-<version>.ipa` | When available; needs sideloading, see below |
 
 > The exact file names may differ a little. If you want to try the newest development build, open the **[Actions](https://github.com/tishonator/arena-battles-hmm3-fan-mod/actions)** tab and pick the latest green run of the `arena-battles` branch. Its **Artifacts** section has the same packages. You need to be signed in to GitHub to download them.
 
@@ -145,7 +188,7 @@ Go to **[Releases](https://github.com/tishonator/arena-battles-hmm3-fan-mod/rele
 
 1. Download the `.apk` on your phone or tablet and open it. Allow installing from this source when Android asks (*Settings → Install unknown apps*).
 2. The app is called **Arena Battles**. It installs as a **separate app** next to the official VCMI app.
-3. On first start, the launcher asks for your HoMM3 data. Copy the `Data`, `Maps` and `Mp3` folders from your PC install to the device, then point the launcher at them. You can also import the GOG offline installer directly.
+3. On first start, the launcher asks for your HoMM3 data. Import the **GOG offline installer** files, or copy the `Data`, `Maps` and `Mp3` folders from a PC. Both ways are explained step by step in [Before you start](#1-before-you-start-the-original-game-data).
 
 ### iOS / iPadOS
 
@@ -153,7 +196,7 @@ iOS only allows App Store apps unless you sideload them, so:
 
 1. Install a sideloading tool such as [AltStore](https://altstore.io/) or [Sideloadly](https://sideloadly.io/) on your computer.
 2. Sideload the `.ipa` with your Apple ID. With a free Apple ID you must refresh the app every 7 days.
-3. Copy the `Data`, `Maps` and `Mp3` folders from your PC install into the app's folder using the **Files** app (or Finder/iTunes file sharing). Then start the app.
+3. Copy the `Data`, `Maps` and `Mp3` folders from your PC install into the app's folder using the **Files** app (or Finder/iTunes file sharing). You can also copy the GOG offline installer files there and import them in the setup wizard, see [Before you start](#1-before-you-start-the-original-game-data). Then start the app.
 
 ### 3. First launch
 
@@ -187,6 +230,7 @@ For more help with the game data, see the official VCMI guides. Arena Battles us
 | Problem | Fix |
 | --- | --- |
 | "Heroes III data files are missing" | The launcher can't find `Data`, `Maps` and `Mp3`. Run the launcher's setup wizard again (*Settings → Run setup wizard*) and point it at a *Complete* or *SoD* install. |
+| I only have the Steam HD Edition | The HD Edition alone doesn't have the files Arena Battles needs. You need *HoMM3 Complete* (e.g. from GOG) or *Shadow of Death*. |
 | The normal VCMI menu appears instead of Arena Battles | You started the official VCMI, not Arena Battles. Use the **VCMI Arena Battles** shortcut. |
 | The game starts in a small window | Change the resolution and fullscreen settings in the launcher (*Settings*) or in-game (*Esc → System options*). |
 | Something else went wrong | Open an [issue](https://github.com/tishonator/arena-battles-hmm3-fan-mod/issues) and attach `VCMI_Client_log.txt` from the `logs` folder inside the VCMI user folder. |
@@ -207,11 +251,13 @@ The `Mods/arenabattles` folder is installed with the engine automatically. On de
 **Automatic builds (GitHub Actions)**
 
 - Every push to the `arena-battles` branch builds packages for **all platforms**: Windows x64/x86/ARM64, macOS Intel/ARM, Linux AppImage, Android and iOS. They appear under the run's **Artifacts**.
-- **Making a release:** push a version tag, and CI builds everything and creates a **draft release** with all the packages attached. Check it and press *Publish*.
+- **Making a release:** push the commit to `arena-battles`, then push a version tag for it. CI builds everything and **publishes the GitHub Release** with all the packages attached. The tag build replaces the branch build of the same commit.
   ```sh
-  git tag v0.5.0
-  git push origin v0.5.0
+  git push origin arena-battles
+  git tag v0.6.0
+  git push origin v0.6.0
   ```
+- If a platform fails (for example when no macOS runner is free), the release is still published with the other packages. Use **Re-run failed jobs** on that run to add the missing files to the same release.
 - Code signing is optional:
   - macOS and Windows signing are skipped when the secrets aren't set;
   - Android uses the public development keystore that VCMI ships for daily builds;
@@ -233,7 +279,7 @@ python arena-battles/tools/preview.py         # optional: renders a menu preview
 | Path | What's inside |
 | --- | --- |
 | `Mods/arenabattles/` | **The mod:** `mod.json`, main menu layout, texts (`Content/config/arenabattles/english.json`) and graphics |
-| `client/arena/` | The draft screens and logic (hero, level-up, spell, artifact and creature picks; AI drafting) |
+| `client/arena/` | The draft screens and logic (hero, skill, spell, artifact and creature picks; automatic level-ups; AI drafting) |
 | `client/mainmenu/`, `client/lobby/`, … | Small engine hooks: menu commands, PvP hotseat, Custom Arena, credits |
 | `lib/modding/ModManager.cpp` | Keeps the Arena Battles mod enabled in this build |
 | `arena-battles/tools/` | Scripts that generate the mod's graphics, plus fonts (SIL Open Font License) |

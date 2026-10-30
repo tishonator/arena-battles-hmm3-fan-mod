@@ -319,6 +319,8 @@ ArenaHeroWindow::ArenaHeroWindow(std::shared_ptr<ArenaDraft> draftPtr, EMode mod
 		? arenaText("pvp.confirmHint", "Check your hero, then press Done. The next player drafts after you.")
 		: mode == EMode::CONFIRM
 		? arenaText("hero.confirmHint", "Check your hero, then press Begin.")
+		: mode == EMode::LEVELED
+		? arenaText("hero.leveledHint", "Your hero reached level 25 and all skills are Expert. Press Done to draft spells.")
 		: arenaText("hero.arrangeHint", "Click an artifact, then a slot to move it."));
 
 	update();

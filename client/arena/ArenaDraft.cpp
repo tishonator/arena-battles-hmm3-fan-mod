@@ -82,6 +82,38 @@ std::vector<HeroTypeID> ArenaRules::heroPool()
 	return result;
 }
 
+namespace
+{
+	std::string skillKey(SecondarySkill skill)
+	{
+		std::string key = skill.toEntity(LIBRARY)->getJsonKey();
+		auto colon = key.find(':');
+		return colon == std::string::npos ? key : key.substr(colon + 1);
+	}
+}
+
+bool ArenaRules::isBattleSkill(SecondarySkill skill)
+{
+	// Everything else only works on the adventure map, after a battle, with war machines or in sieges
+	// (none of which exist in the arena). Wisdom and Mysticism don't matter either: drafted spells
+	// go straight into the spell book, and mana only regenerates between days.
+	static const std::set<std::string> battleSkills = {
+		"offence", "armorer", "archery", "resistance", "tactics", "leadership", "luck",
+		"intelligence", "sorcery", "airMagic", "earthMagic", "fireMagic", "waterMagic",
+	};
+	return vstd::contains(battleSkills, skillKey(skill));
+}
+
+std::vector<SecondarySkill> ArenaRules::skillPool()
+{
+	auto allowed = LIBRARY->skillh->getDefaultAllowed();
+	std::vector<SecondarySkill> result;
+	for(const auto & skill : LIBRARY->skillh->objects)
+		if(skill && vstd::contains(allowed, skill->getId()) && isBattleSkill(skill->getId()))
+			result.push_back(skill->getId());
+	return result;
+}
+
 std::vector<SpellID> ArenaRules::spellPool()
 {
 	auto allowed = LIBRARY->spellh->getDefaultAllowed();
@@ -190,11 +222,7 @@ int ArenaRules::skillBattleValue(SecondarySkill skill)
 		{"sorcery", 60}, {"wisdom", 40}, {"intelligence", 45}, {"resistance", 50}, {"tactics", 35},
 		{"mysticism", 15}, {"firstAid", 5}, {"artillery", 5}, {"eagleEye", 2},
 	};
-	std::string key = skill.toEntity(LIBRARY)->getJsonKey();
-	auto colon = key.find(':');
-	if(colon != std::string::npos)
-		key = key.substr(colon + 1);
-	auto it = values.find(key);
+	auto it = values.find(skillKey(skill));
 	return it == values.end() ? 1 : it->second;
 }
 
@@ -248,6 +276,33 @@ namespace
 			if(faction.hasValue() && faction.toFaction()->hasTown())
 				w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("ITPA"),
 					faction.toFaction()->town->clientInfo.icons[true][false] + 2, 0, CARD_CENTER - 24, 284));
+		};
+		return offer;
+	}
+
+	ArenaOffer skillOffer(SecondarySkill skillId)
+	{
+		// the hero gets the skill at Basic and reaches Expert during the automatic level-ups, so Expert is shown
+		constexpr int EXPERT = 3;
+		const CSkill * skill = skillId.toSkill();
+		ArenaOffer offer;
+		offer.description = skill->getNameTranslated();
+		offer.popup = [skillId]()
+		{
+			CRClickPopup::createAndPush(skillId.toSkill()->getDescriptionTranslated(EXPERT),
+				std::make_shared<CComponent>(ComponentType::SEC_SKILL, skillId, EXPERT));
+		};
+		offer.build = [skill, skillId](Widgets & w)
+		{
+			auto icon = std::make_shared<CAnimImage>(AnimationPath::builtin("SECSK82"), skillId.getNum() * 3 + 3 + EXPERT - 1, 0, 0, 0);
+			icon->moveBy(Point((ArenaCard::WIDTH - icon->pos.w) / 2, 18));
+			w.push_back(icon);
+			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 128, FONT_MEDIUM, ETextAlignment::CENTER, Colors::YELLOW,
+				skill->getNameTranslated(), ArenaCard::WIDTH - 16));
+			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 150, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
+				arenaText("draft.skillExpert", "Expert at level 25")));
+			w.push_back(std::make_shared<CMultiLineLabel>(Rect(12, 170, ArenaCard::WIDTH - 24, 150), FONT_SMALL, ETextAlignment::TOPCENTER,
+				Colors::WHITE, skill->getDescriptionTranslated(EXPERT)));
 		};
 		return offer;
 	}
@@ -470,10 +525,12 @@ std::shared_ptr<CGHeroInstance> ArenaDraft::createHero(HeroTypeID type)
 	hero->exp = 0;
 	hero->level = 1;
 
-	// starting secondary skills of the hero (as in H3)
+	// starting secondary skills of the hero (as in H3), but only those that matter in a battle -
+	// the free slots are drafted in the skill step
 	hero->secSkills.clear();
 	for(const auto & skill : heroType->secSkillsInit)
-		hero->setSecSkillLevel(skill.first, skill.second, ChangeValueMode::ABSOLUTE);
+		if(ArenaRules::isBattleSkill(skill.first))
+			hero->setSecSkillLevel(skill.first, skill.second, ChangeValueMode::ABSOLUTE);
 
 	// starting spells of the hero, and a spell book for everyone (step 2)
 	for(const auto & spell : heroType->spells)
@@ -515,59 +572,96 @@ void ArenaDraft::stepChooseHero()
 			for(int i = 0; i < GameConstants::PRIMARY_SKILLS; i++)
 				side.primary[i] = initial[i];
 			self->syncPrimarySkills(side);
-			self->stepLevelUp();
+			self->stepSkill();
 		},
 		[self]() { self->cancel(); },
 		nullptr);
 }
 
-// --- step 3: level ups ------------------------------------------------------------------------
+// --- step 2: battle skills --------------------------------------------------------------------
 
-ArenaDraft::LevelUpRoll ArenaDraft::rollLevelUp(ArenaSide & side)
+std::vector<SecondarySkill> ArenaDraft::offerSkills(const ArenaSide & side)
 {
-	LevelUpRoll roll;
-	roll.primary = randomizer->rollPrimarySkillForLevelup(side.hero.get());
-	roll.choices = randomizer->rollSecondarySkills(side.hero.get());
-	return roll;
+	if(side.hero->secSkills.size() >= ArenaRules::SKILL_SLOTS)
+		return {};
+	auto pool = ArenaRules::skillPool();
+	vstd::erase_if(pool, [&side](SecondarySkill skill) { return side.hero->getSecSkillLevel(skill) > 0; });
+	return pickRandom(pool, ArenaRules::OFFERS_PER_PICK);
 }
 
-void ArenaDraft::applyLevelUp(ArenaSide & side, const LevelUpRoll & roll, int choice)
+void ArenaDraft::giveSkill(ArenaSide & side, SecondarySkill skill)
 {
-	side.primary[roll.primary.getNum()]++;
-	syncPrimarySkills(side);
-	if(choice >= 0 && choice < roll.choices.size())
-		side.hero->setSecSkillLevel(roll.choices[choice], 1, ChangeValueMode::RELATIVE);
-	side.hero->levelUp();
+	side.hero->setSecSkillLevel(skill, 1, ChangeValueMode::ABSOLUTE);
+}
+
+void ArenaDraft::stepSkill()
+{
+	if(cancelled)
+		return;
+	auto skills = offerSkills(player());
+	if(skills.empty())
+	{
+		stepLevelUp();
+		return;
+	}
+
+	std::vector<ArenaOffer> offers;
+	for(auto id : skills)
+		offers.push_back(skillOffer(id));
+
+	MetaString subtitle;
+	subtitle.appendRawString(arenaText("draft.skillPick", "Skill %d of %d - every skill becomes Expert at level 25"));
+	subtitle.replaceNumber(player().hero->secSkills.size() + 1);
+	subtitle.replaceNumber(ArenaRules::SKILL_SLOTS);
+
+	auto self = shared_from_this();
+	ENGINE->windows().createAndPushWindow<ArenaChoiceWindow>(
+		arenaText("draft.chooseSkill", "Choose a Skill"), withSideLabel(subtitle.toString()), offers,
+		[self, skills](int index)
+		{
+			self->giveSkill(self->player(), skills.at(index));
+			self->stepSkill();
+		},
+		[self]() { self->cancel(); },
+		[self]() { ENGINE->windows().createAndPushWindow<ArenaHeroWindow>(self, ArenaHeroWindow::EMode::VIEW, nullptr, nullptr); });
+}
+
+// --- step 3: level ups (automatic) --------------------------------------------------------------
+
+void ArenaDraft::autoLevelUp(ArenaSide & side)
+{
+	auto & hero = *side.hero;
+	while(hero.level < ArenaRules::TARGET_LEVEL)
+	{
+		// primary skill: the hero class decides, as in H3
+		side.primary[randomizer->rollPrimarySkillForLevelup(&hero).getNum()]++;
+		syncPrimarySkills(side);
+
+		// secondary skill: upgrade the most useful skill that isn't Expert yet
+		// (8 skills need 16 upgrades, so all of them are Expert long before level 25)
+		SecondarySkill best = SecondarySkill::NONE;
+		for(const auto & skill : hero.secSkills)
+			if(skill.second < MasteryLevel::EXPERT
+				&& (best == SecondarySkill::NONE || ArenaRules::skillBattleValue(skill.first) > ArenaRules::skillBattleValue(best)))
+				best = skill.first;
+		if(best != SecondarySkill::NONE)
+			hero.setSecSkillLevel(best, 1, ChangeValueMode::RELATIVE);
+
+		hero.levelUp();
+	}
 }
 
 void ArenaDraft::stepLevelUp()
 {
 	if(cancelled)
 		return;
-	if(player().hero->level >= ArenaRules::TARGET_LEVEL)
-	{
-		stepSpell();
-		return;
-	}
+	autoLevelUp(player());
 
+	// show the result: the hero screen at level 25
 	auto self = shared_from_this();
-	auto roll = std::make_shared<LevelUpRoll>(rollLevelUp(player()));
-	auto choice = std::make_shared<int>(-1);
-
-	// The original H3 level up window. The hero gains the level only after the window is closed,
-	// but the window shows the new level, so it is applied to a temporary level here.
-	player().hero->level++;
-	auto window = std::make_shared<CLevelWindow>(player().hero.get(), roll->primary, roll->choices, [choice](ui32 index) { *choice = index; });
-	player().hero->level--;
-	window->onClosed = [self, roll, choice]()
-	{
-		arenaSafeCall([&]()
-		{
-			self->applyLevelUp(self->player(), *roll, *choice);
-			self->stepLevelUp();
-		});
-	};
-	ENGINE->windows().pushWindow(window);
+	ENGINE->windows().createAndPushWindow<ArenaHeroWindow>(self, ArenaHeroWindow::EMode::LEVELED,
+		[self]() { self->stepSpell(); },
+		[self]() { self->cancel(); });
 }
 
 // --- step 4: spells -----------------------------------------------------------------------------
@@ -809,23 +903,18 @@ void ArenaDraft::draftEnemy()
 		side.primary[i] = initial[i];
 	syncPrimarySkills(side);
 
-	// 3. level ups: the skill most useful in battle (upgrades of good skills count a bit more)
-	while(side.hero->level < ArenaRules::TARGET_LEVEL)
+	// 2. battle skills: the offer most useful in battle
+	for(auto skills = offerSkills(side); !skills.empty(); skills = offerSkills(side))
 	{
-		auto roll = rollLevelUp(side);
-		int best = -1;
-		int bestValue = -1;
-		for(int i = 0; i < roll.choices.size(); i++)
+		auto best = *std::max_element(skills.begin(), skills.end(), [](SecondarySkill a, SecondarySkill b)
 		{
-			int value = ArenaRules::skillBattleValue(roll.choices[i]) * (10 + side.hero->getSecSkillLevel(roll.choices[i]));
-			if(value > bestValue)
-			{
-				bestValue = value;
-				best = i;
-			}
-		}
-		applyLevelUp(side, roll, best);
+			return ArenaRules::skillBattleValue(a) < ArenaRules::skillBattleValue(b);
+		});
+		giveSkill(side, best);
 	}
+
+	// 3. level ups: automatic, as for the player
+	autoLevelUp(side);
 
 	// 4. spells: highest level, then most expensive
 	for(int i = 0; i < ArenaRules::SPELL_PICKS; i++)
