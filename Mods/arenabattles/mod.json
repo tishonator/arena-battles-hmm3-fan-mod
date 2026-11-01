@@ -3,7 +3,7 @@
 	"description" : "Arena battles only: pick a hero, skills, artifacts, spells and army, then fight the computer (PvE) or a friend on the same computer (PvP). Custom Arena sets up any battle by hand.",
 	"author" : "Tihomir Ivanov (TishGamer)",
 	"contact" : "https://github.com/tishonator/arena-battles-hmm3-fan-mod",
-	"version" : "0.6.0",
+	"version" : "0.7.0",
 	"modType" : "Interface",
 	"language" : "english",
 
@@ -14,7 +14,15 @@
 	"changelog" : {
 		"0.1.0" : [ "Main menu: title, New Arena Battle, Credits, Quit" ],
 		"0.5.0" : [ "Renamed from VCMI Arena to Arena Battles (mod id arenabattles)" ],
-		"0.6.0" : [ "Skill draft: fill the 8 skill slots with battle skills only (1 of 3 per screen)", "Level-ups to 25 are automatic, all skills reach Expert" ]
+		"0.6.0" : [ "Skill draft: fill the 8 skill slots with battle skills only (1 of 3 per screen)", "Level-ups to 25 are automatic, all skills reach Expert" ],
+		"0.7.0" : [
+			"Hero choice: 4 heroes (2 might, 2 magic) from 4 different factions, name shown on top",
+			"Heroes with non-battle specialties (gold, resources, Navigation, Logistics, Eagle Eye, First Aid, Ballista, ...) are no longer offered",
+			"Earthquake removed from the spell draft (the arena has no walls)",
+			"Artifacts are drafted slot by slot (helmet, necklace, cloak, weapon, shield, armor, boots, 2 rings, 2 misc); drafted parts form combination artifacts automatically; Orb of Inhibition removed",
+			"Armies 10x larger, like the end of a large map; every creature offer has the same total strength (upgraded and stronger creatures come in smaller stacks), no random amounts",
+			"Every creature step offers one creature of the hero's faction and two of other factions"
+		]
 	},
 
 	"translations" : [

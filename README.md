@@ -2,7 +2,7 @@
 
 **Draft a hero, build an army, fight one battle.** Arena Battles is a fan-made arena mode for *Heroes of Might and Magic III*, built on the open-source [VCMI](https://vcmi.eu/) engine. There is no map and no economy, and you won't wait 100 turns. You pick a hero, draft skills, spells, artifacts and creatures one screen at a time, and then everything comes down to one battle.
 
-**⬇️ [Download the latest release (v0.6.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
+**⬇️ [Download the latest release (v0.7.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
 
 > [!CAUTION]
 > **You need your own copy of *Heroes of Might and Magic III: Complete* or *Shadow of Death*.**
@@ -22,6 +22,7 @@
 - [Game modes](#game-modes)
 - [How a draft works](#how-a-draft-works)
   - [Choosing your skills](#choosing-your-skills)
+  - [Fair picks: heroes, artifacts and armies](#fair-picks-heroes-artifacts-and-armies)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
   - [Before you start: the original game data](#1-before-you-start-the-original-game-data)
@@ -48,8 +49,9 @@
   - **PvE** draft against the computer;
   - **PvP** hotseat for two players on one computer;
   - **Custom Arena**, where you set up both sides by hand.
-- **A full draft in about 10 minutes.** Pick 1 of 3 heroes and fill all 8 skill slots with **battle skills only**. Your hero then jumps to level 25 with every skill at Expert. Then choose 9 spells, 9 artifacts and 7 creature stacks. Every pick is 1 of 3 random offers.
-- **No useless skills.** You'll never be offered Estates, Scouting, Navigation or other skills that do nothing in a single battle.
+- **A full draft in about 10 minutes.** Pick 1 of 4 heroes (always 2 might and 2 magic heroes) and fill all 8 skill slots with **battle skills only**. Your hero then jumps to level 25 with every skill at Expert. Then choose 9 spells, 11 artifacts (one for each slot) and 7 creature stacks.
+- **No useless picks.** You'll never be offered Estates, Scouting or Navigation, heroes whose specialty is gold or Logistics, the Earthquake spell, or other things that do nothing in a single battle.
+- **Big, balanced armies.** Armies are about the size you'd have at the end of a large map, and every creature offer has the same total strength: upgraded and stronger creatures come in smaller stacks, with no random amounts.
 - **A smart AI opponent.** In PvE, the computer drafts the same way you do and always takes the strongest offer.
 - **Fair fights.** Quick combat is off, both sides get the same number of picks, and the battlefield is random.
 - **Original HoMM3 look and feel.** The mod runs on your own copy of the game data, so it has the classic creatures, spells, artifacts, music and battle screen.
@@ -67,18 +69,18 @@
 
 ## How a draft works
 
-1. **Choose your hero.** You get 1 of 3 random heroes. Every hero starts with a spell book.
+1. **Choose your hero.** You get 4 random heroes: 2 might and 2 magic heroes, each from a different faction. Every hero starts with a spell book.
 2. **Choose your skills.** A hero has 8 skill slots, and you fill them one screen at a time, taking 1 of 3 skills each time.
    - Only skills that matter in a battle are offered: Offense, Armorer, Archery, Resistance, Tactics, Leadership, Luck, Intelligence, Sorcery, and Air, Earth, Fire and Water Magic.
    - Skills the hero starts with stay if they're battle skills; any others are removed, so every hero gets 6-8 skill picks.
 3. **Level 25, automatically.** Your hero levels up to 25 right away. Attack, Defense, Power and Knowledge grow the way they do for the hero's class in the original game, and **all your skills become Expert**. A summary screen shows the result.
-4. **Spells.** There are 9 screens, and on each you take 1 of 3 spells.
-5. **Artifacts.** There are 9 screens, and on each you take 1 of 3 artifacts. Then you **arrange** them on your hero's paper doll.
-6. **Creatures.** There are 7 screens, one for each creature level, and on each you take 1 of 3 stacks. Stack sizes depend on the level:
+4. **Spells.** There are 9 screens, and on each you take 1 of 3 combat spells.
+5. **Artifacts.** There are 11 screens, one for each slot: helmet, necklace, cloak, weapon, shield, armor, boots, two rings and two miscellaneous artifacts. On each you take 1 of 3 artifacts. Then you **arrange** them on your hero's paper doll.
+6. **Creatures.** There are 7 screens, one for each creature level. Each offers 3 stacks from 3 different factions, and one is always from your hero's faction. A typical stack of a non-upgraded creature has:
 
-   | Level  | 1      | 2     | 3     | 4     | 5     | 6    | 7   |
-   | ------ | ------ | ----- | ----- | ----- | ----- | ---- | --- |
-   | Amount | 90-110 | 30-40 | 20-25 | 14-18 | 11-13 | 9-10 | 7-8 |
+   | Level         | 1     | 2    | 3    | 4    | 5    | 6   | 7   |
+   | ------------- | ----- | ---- | ---- | ---- | ---- | --- | --- |
+   | Typical stack | ~1000 | ~350 | ~225 | ~160 | ~120 | ~95 | ~75 |
 
 7. **Confirm.** Review your hero and see your opponent's hero. Then press **Begin**.
 8. **Fight!** One battle on a random battlefield decides the winner, and then the game ends.
@@ -104,11 +106,45 @@ When all slots are full, your hero **levels up to 25 automatically**, and you se
 
 The computer opponent drafts its skills the same way and picks the most useful skill for battle. In PvP, each player drafts their own skills.
 
+### Fair picks: heroes, artifacts and armies
+
+Version 0.7.0 makes the draft less about luck and more about your choices.
+
+**Heroes.** You choose from **4 heroes: 2 might and 2 magic heroes, each from a different faction**. So whether you like might or magic, you always have a choice. The hero's name is shown at the top of each card. Heroes whose specialty does nothing in an arena battle are never offered:
+
+- gold and resources (for example +350 gold or +1 crystal);
+- Navigation, Logistics, Eagle Eye, Mysticism and Estates;
+- First Aid and Ballista, since there are no war machines in the arena;
+- Necromancy, which only raises skeletons after a battle.
+
+Heroes with a creature, spell or battle-skill specialty stay, so a Galthran still makes your Skeletons stronger.
+
+**Spells.** Only combat spells are offered. **Earthquake** is left out, since it only damages castle walls and the arena has none. Every other combat spell stays, even ones with a small effect like Remove Obstacle.
+
+![Choose an artifact for one slot](arena-battles/screenshots/choose-artifact.png)
+
+**Artifacts.** Every screen is for **one slot**, so your artifacts never compete for the same place: helmet, necklace, cloak, weapon, shield, armor, boots, two rings, then two miscellaneous artifacts.
+
+- Only artifacts that do something in battle are offered.
+- **Orb of Inhibition** is left out because it stops all spell casting, which would make a magic hero useless.
+- **Combination artifacts** (for example Angelic Alliance) are not offered ready-made. If you draft all of their parts, they **combine automatically** after the last artifact screen, just like in the original game.
+
+![Choose level 7 creatures: one from your hero's faction, two from other factions](arena-battles/screenshots/choose-creatures.png)
+
+**Armies.** Armies are about **10 times larger** than in earlier versions, closer to the end of a large or extra-large map, so battles last longer.
+
+- **Every offer on a screen has the same total strength.** The stack size is based on the creature's strength rating from the original game (its AI value). Upgraded and stronger creatures come in smaller stacks, weaker ones in bigger stacks, and amounts are never random. For example:
+  - level 1: 740 Pikemen or 510 Halberdiers;
+  - level 7: 70 Angels or 39 Archangels, and 100 Bone Dragons or 39 Black Dragons.
+- **Each screen offers 3 different factions, and one creature is always from your hero's faction.** A Necropolis hero can build a full Necropolis army for the best morale, or mix factions for the strongest creatures.
+
+The computer opponent follows the same rules. It takes the most valuable artifact for each slot and prefers creatures from its own faction.
+
 ## Screenshots
 
 | | |
 | --- | --- |
-| ![Choose a hero](arena-battles/screenshots/choose-hero.png) **Choose 1 of 3 heroes** | ![Battle](arena-battles/screenshots/battle.png) **One battle decides it** |
+| ![Choose a hero](arena-battles/screenshots/choose-hero.png) **Choose 1 of 4 heroes** | ![Battle](arena-battles/screenshots/battle.png) **One battle decides it** |
 | ![Choose a spell](arena-battles/screenshots/choose-spell.png) **Draft spells** | ![Choose an artifact](arena-battles/screenshots/choose-artifact.png) **Draft artifacts** |
 | ![Arrange artifacts](arena-battles/screenshots/arrange-artifacts.png) **Arrange your artifacts** | ![Choose creatures](arena-battles/screenshots/choose-creatures.png) **Draft creatures** |
 | ![Hero confirm](arena-battles/screenshots/hero-confirm.png) **Confirm and begin** | ![Custom Arena](arena-battles/screenshots/custom-arena.png) **Custom Arena sandbox** |
@@ -147,7 +183,7 @@ Arena Battles uses the same game data as VCMI. **If you already play VCMI on a c
 
 ### 2. Download
 
-Open the **[latest release (v0.6.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.6.0`):
+Open the **[latest release (v0.7.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.7.0`):
 
 | System | File | Notes |
 | --- | --- | --- |
@@ -254,8 +290,8 @@ The `Mods/arenabattles` folder is installed with the engine automatically. On de
 - **Making a release:** push the commit to `arena-battles`, then push a version tag for it. CI builds everything and **publishes the GitHub Release** with all the packages attached. The tag build replaces the branch build of the same commit.
   ```sh
   git push origin arena-battles
-  git tag v0.6.0
-  git push origin v0.6.0
+  git tag v0.7.0
+  git push origin v0.7.0
   ```
 - If a platform fails (for example when no macOS runner is free), the release is still published with the other packages. Use **Re-run failed jobs** on that run to add the missing files to the same release.
 - Code signing is optional:

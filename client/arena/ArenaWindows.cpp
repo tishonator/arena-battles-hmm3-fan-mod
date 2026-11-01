@@ -80,7 +80,7 @@ ArenaCard::ArenaCard(Point position, const ArenaOffer & offer)
 	OBJECT_CONSTRUCTION;
 	pos.x += position.x;
 	pos.y += position.y;
-	pos.w = WIDTH;
+	pos.w = offer.width > 0 ? offer.width : WIDTH;
 	pos.h = HEIGHT;
 	setRedrawParent(true);
 
@@ -155,11 +155,16 @@ ArenaChoiceWindow::ArenaChoiceWindow(const std::string & titleText, const std::s
 	subtitle = std::make_shared<CLabel>(pos.w / 2, 62, FONT_MEDIUM, ETextAlignment::CENTER, Colors::WHITE, subtitleText);
 
 	const int count = static_cast<int>(offers.size());
-	const int gap = 25;
-	const int totalWidth = count * ArenaCard::WIDTH + (count - 1) * gap;
+	const int gap = count > 3 ? 12 : 25;
+	auto cardWidth = [this](int i) { return offers[i].width > 0 ? offers[i].width : ArenaCard::WIDTH; };
+	int totalWidth = (count - 1) * gap;
+	for(int i = 0; i < count; i++)
+		totalWidth += cardWidth(i);
+	int x = (pos.w - totalWidth) / 2;
 	for(int i = 0; i < count; i++)
 	{
-		auto card = std::make_shared<ArenaCard>(Point((pos.w - totalWidth) / 2 + i * (ArenaCard::WIDTH + gap), 90), offers[i]);
+		auto card = std::make_shared<ArenaCard>(Point(x, 90), offers[i]);
+		x += cardWidth(i) + gap;
 		card->onSelect = [this, i]() { select(i); };
 		card->onChoose = [this, i]() { select(i); choose(); };
 		card->onHover = [this, i](bool on) { showDescription(on ? i : selectedCard); };

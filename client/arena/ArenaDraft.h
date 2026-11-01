@@ -31,18 +31,23 @@ namespace ArenaRules
 	constexpr int TARGET_LEVEL = 25;
 	constexpr int SKILL_SLOTS = 8;  // secondary skills a hero can have; the free ones are drafted
 	constexpr int SPELL_PICKS = 9;
-	constexpr int ARTIFACT_PICKS = 9;
 	constexpr int CREATURE_LEVELS = 7;
 	constexpr int OFFERS_PER_PICK = 3;
+	constexpr int HERO_OFFERS = 4;  // 2 might + 2 magic heroes, 4 different factions
 
-	/// min/max amount of a stack for each creature level (index 0 = level 1)
-	std::pair<int, int> creatureAmount(int level);
+	/// One artifact step per body slot, then 2 misc artifacts (the right column of the hero screen)
+	const std::vector<ArtifactPosition> & artifactSteps();
 
-	std::vector<HeroTypeID> heroPool();
+	/// Fixed stack size of a creature: every offer of a level has the same total strength (AI value),
+	/// so stronger and upgraded creatures come in smaller stacks
+	int creatureAmount(CreatureID creature);
+
+	std::vector<HeroTypeID> heroPool();        // heroes whose specialty works in a battle
+	bool isBattleHero(HeroTypeID hero);
 	std::vector<SecondarySkill> skillPool();   // secondary skills that do something in a single battle
 	bool isBattleSkill(SecondarySkill skill);
-	std::vector<SpellID> spellPool();          // combat spells, levels 1-5
-	std::vector<ArtifactID> artifactPool();    // hero artifacts that do something in battle
+	std::vector<SpellID> spellPool();          // combat spells, levels 1-5, that work in the arena
+	std::vector<ArtifactID> artifactPool(ArtifactPosition slot); // battle artifacts for one slot (no combinations)
 	std::vector<CreatureID> creaturePool(int level); // town creatures (basic + upgraded) of all factions
 
 	/// How useful a secondary skill is in an arena battle (used by the computer opponent)
@@ -122,15 +127,19 @@ private:
 	void stepConfirm();
 
 	// shared logic
+	std::vector<HeroTypeID> offerHeroes(HeroTypeID excluded);
 	std::vector<SecondarySkill> offerSkills(const ArenaSide & side);
 	void giveSkill(ArenaSide & side, SecondarySkill skill);
 	/// levels the hero up to TARGET_LEVEL: primary skills as in H3, drafted skills are upgraded to Expert
 	void autoLevelUp(ArenaSide & side);
 	std::vector<SpellID> offerSpells(const ArenaSide & side);
-	std::vector<ArtifactID> offerArtifacts(const ArenaSide & side);
-	std::vector<std::pair<CreatureID, int>> offerCreatures(int level);
+	std::vector<ArtifactID> offerArtifacts(const ArenaSide & side, ArtifactPosition slot);
+	/// 3 creatures of 3 different factions, one of them always from the hero's faction
+	std::vector<std::pair<CreatureID, int>> offerCreatures(const ArenaSide & side, int level);
 	void giveSpell(ArenaSide & side, SpellID spell);
-	void giveArtifact(ArenaSide & side, ArtifactID artifact);
+	void giveArtifact(ArenaSide & side, ArtifactID artifact, ArtifactPosition slot);
+	/// builds every combination artifact whose parts the hero wears; returns the names of the built ones
+	std::vector<std::string> assembleCombinations(ArenaSide & side);
 	void giveCreature(ArenaSide & side, int level, CreatureID creature, int amount);
 	void syncPrimarySkills(ArenaSide & side);
 

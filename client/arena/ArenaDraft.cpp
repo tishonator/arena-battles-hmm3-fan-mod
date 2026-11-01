@@ -34,6 +34,7 @@
 #include "../../lib/VCMIDirs.h"
 #include "../../lib/bonuses/Bonus.h"
 #include "../../lib/bonuses/BonusList.h"
+#include "../../lib/bonuses/Limiters.h"
 #include "../../lib/callback/EditorCallback.h"
 #include "../../lib/callback/GameRandomizer.h"
 #include "../../lib/entities/artifact/ArtifactUtils.h"
@@ -62,24 +63,32 @@
 // Rules and pools
 // ---------------------------------------------------------------------------------------------
 
-std::pair<int, int> ArenaRules::creatureAmount(int level)
+int ArenaRules::creatureAmount(CreatureID creatureId)
 {
-	static const std::array<std::pair<int, int>, 7> amounts = {{
-		{90, 110}, {30, 40}, {20, 25}, {14, 18}, {11, 13}, {9, 10}, {7, 8}
-	}};
-	return amounts.at(std::clamp(level, 1, 7) - 1);
-}
-
-std::vector<HeroTypeID> ArenaRules::heroPool()
-{
-	std::vector<HeroTypeID> result;
-	for(const auto & hero : LIBRARY->heroh->objects)
+	// stack size of an average non-upgraded creature of each level - end of a large map
+	static const std::array<int, 7> baseAmount = {1000, 350, 225, 160, 120, 95, 75};
+	// average strength (AI value, as in H3) of the non-upgraded town creatures of each level
+	static const std::array<int64_t, 7> reference = []()
 	{
-		if(!hero || hero->special || hero->onlyOnWaterMap || !hero->heroClass)
-			continue;
-		result.push_back(hero->getId());
-	}
-	return result;
+		std::array<int64_t, 7> result{};
+		for(int level = 1; level <= 7; level++)
+		{
+			std::vector<int64_t> values;
+			for(auto id : creaturePool(level))
+				if(!id.toCreature()->upgrades.empty())
+					values.push_back(id.toCreature()->getAIValue());
+			std::sort(values.begin(), values.end());
+			result[level - 1] = values.empty() ? 1 : values[values.size() / 2]; // median
+		}
+		return result;
+	}();
+
+	const CCreature * creature = creatureId.toCreature();
+	int index = std::clamp(static_cast<int>(creature->getLevel()), 1, 7) - 1;
+	double amount = static_cast<double>(baseAmount[index]) * reference[index] / std::max<int64_t>(1, creature->getAIValue());
+	// round to easy-to-read numbers
+	int step = amount >= 300 ? 10 : (amount >= 60 ? 5 : 1);
+	return std::max(1, static_cast<int>(std::lround(amount / step)) * step);
 }
 
 namespace
@@ -90,6 +99,58 @@ namespace
 		auto colon = key.find(':');
 		return colon == std::string::npos ? key : key.substr(colon + 1);
 	}
+
+	const std::set<BonusType> & adventureOnlyBonuses();
+}
+
+bool ArenaRules::isBattleHero(HeroTypeID heroId)
+{
+	// bonus types of the skill specialties that do nothing in the arena (Navigation, Estates, First Aid, ...)
+	static const std::set<std::pair<BonusType, BonusSubtypeID>> nonBattleSkillBonuses = []()
+	{
+		std::set<std::pair<BonusType, BonusSubtypeID>> battle;
+		std::set<std::pair<BonusType, BonusSubtypeID>> other;
+		for(const auto & skill : LIBRARY->skillh->objects)
+			if(skill)
+				for(const auto & bonus : skill->specialtyTargetBonuses)
+					(isBattleSkill(skill->getId()) ? battle : other).insert({bonus->type, bonus->subtype});
+		for(const auto & entry : battle)
+			other.erase(entry);
+		return other;
+	}();
+
+	const CHero * hero = heroId.toHeroType();
+	if(hero->specialty.empty())
+		return false;
+	for(const auto & bonus : hero->specialty)
+	{
+		if(vstd::contains(adventureOnlyBonuses(), bonus->type))
+			continue; // gold, resources, movement, Necromancy, ...
+		if(vstd::contains(nonBattleSkillBonuses, std::make_pair(bonus->type, bonus->subtype)))
+			continue;
+		if(const auto * limiter = dynamic_cast<const CCreatureTypeLimiter *>(bonus->limiter.get()))
+			if(limiter->creatureID.toCreature()->warMachine != ArtifactID::NONE)
+				continue; // war machines are not in the arena
+		return true;
+	}
+	return false;
+}
+
+std::vector<HeroTypeID> ArenaRules::heroPool()
+{
+	std::vector<HeroTypeID> result;
+	for(const auto & hero : LIBRARY->heroh->objects)
+	{
+		if(!hero || hero->special || hero->onlyOnWaterMap || !hero->heroClass)
+			continue;
+		auto faction = hero->heroClass->faction;
+		if(!faction.hasValue() || !faction.toFaction()->hasTown())
+			continue;
+		if(!isBattleHero(hero->getId()))
+			continue;
+		result.push_back(hero->getId());
+	}
+	return result;
 }
 
 bool ArenaRules::isBattleSkill(SecondarySkill skill)
@@ -126,6 +187,8 @@ std::vector<SpellID> ArenaRules::spellPool()
 			continue;
 		if(spell->getLevel() < 1 || spell->getLevel() > 5)
 			continue;
+		if(spell->getId() == SpellID::EARTHQUAKE) // only hits castle walls, and the arena has none
+			continue;
 		result.push_back(spell->getId());
 	}
 	return result;
@@ -157,7 +220,12 @@ namespace
 	void collectBonusTypes(const CArtifact * art, std::set<BonusType> & out)
 	{
 		for(const auto & bonus : art->getExportedBonusList())
+		{
+			// a spell given by an artifact only counts when it can be cast in battle (not Summon Boat etc.)
+			if(bonus->type == BonusType::SPELL && !bonus->subtype.as<SpellID>().toSpell()->isCombat())
+				continue;
 			out.insert(bonus->type);
+		}
 		if(art->isCombined())
 			for(const auto * part : art->getConstituents())
 				collectBonusTypes(part, out);
@@ -174,10 +242,20 @@ namespace
 	}
 }
 
-std::vector<ArtifactID> ArenaRules::artifactPool()
+const std::vector<ArtifactPosition> & ArenaRules::artifactSteps()
+{
+	static const std::vector<ArtifactPosition> steps = {
+		ArtifactPosition::HEAD, ArtifactPosition::NECK, ArtifactPosition::SHOULDERS,
+		ArtifactPosition::RIGHT_HAND, ArtifactPosition::LEFT_HAND, ArtifactPosition::TORSO, ArtifactPosition::FEET,
+		ArtifactPosition::RIGHT_RING, ArtifactPosition::LEFT_RING,
+		ArtifactPosition::MISC1, ArtifactPosition::MISC2,
+	};
+	return steps;
+}
+
+std::vector<ArtifactID> ArenaRules::artifactPool(ArtifactPosition slot)
 {
 	auto allowed = LIBRARY->arth->getDefaultAllowed();
-	const auto & wornSlots = ArtifactUtils::commonWornSlots();
 	std::vector<ArtifactID> result;
 	for(const auto & art : LIBRARY->arth->objects)
 	{
@@ -185,14 +263,18 @@ std::vector<ArtifactID> ArenaRules::artifactPool()
 			continue;
 		if(art->aClass == EArtifactClass::ART_SPECIAL || art->isScroll() || art->isBig() || art->getWarMachine() != CreatureID::NONE)
 			continue;
-		const auto & slots = art->getPossibleSlots();
-		if(!slots.count(ArtBearer::HERO))
+		// combination artifacts fill several slots; they are built automatically from drafted parts instead
+		if(art->isCombined())
 			continue;
-		bool wearable = false;
-		for(const auto & slot : slots.at(ArtBearer::HERO))
-			if(vstd::contains(wornSlots, slot))
-				wearable = true;
-		if(!wearable || !isBattleArtifact(art.get()))
+		const auto & slots = art->getPossibleSlots();
+		if(!slots.count(ArtBearer::HERO) || !vstd::contains(slots.at(ArtBearer::HERO), slot))
+			continue;
+		if(!isBattleArtifact(art.get()))
+			continue;
+		// no artifact that stops all spell casting (Orb of Inhibition): magic heroes must stay playable
+		std::set<BonusType> types;
+		collectBonusTypes(art.get(), types);
+		if(vstd::contains(types, BonusType::BLOCK_ALL_MAGIC))
 			continue;
 		result.push_back(art->getId());
 	}
@@ -234,6 +316,7 @@ namespace
 {
 	using Widgets = std::vector<std::shared_ptr<CIntObject>>;
 	constexpr int CARD_CENTER = ArenaCard::WIDTH / 2;
+	constexpr int HERO_CARD_WIDTH = 182; // 4 cards + gaps fit the 800 pixel wide window
 
 	std::string artifactClassText(const CArtifact * art)
 	{
@@ -253,29 +336,36 @@ namespace
 		ArenaOffer offer;
 		offer.description = hero->getSpecialtyNameTranslated() + "\n" + hero->getSpecialtyDescriptionTranslated();
 		offer.popup = [heroId]() { ENGINE->windows().createAndPushWindow<CHeroOverview>(heroId); };
+		// 4 hero cards are shown, so they are narrower than the others
+		offer.width = HERO_CARD_WIDTH;
 		offer.build = [hero](Widgets & w)
 		{
-			w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("PortraitsLarge"), hero->getIconIndex(), 0, CARD_CENTER - 29, 14));
-			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 92, FONT_SMALL, ETextAlignment::CENTER, Colors::YELLOW,
-				arenaText("draft.levelOne", "Level 1")));
+			constexpr int center = HERO_CARD_WIDTH / 2;
+			w.push_back(std::make_shared<CLabel>(center, 20, FONT_BIG, ETextAlignment::CENTER, Colors::YELLOW,
+				hero->getNameTranslated(), HERO_CARD_WIDTH - 8));
+			w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("PortraitsLarge"), hero->getIconIndex(), 0, center - 29, 38));
+			bool might = hero->heroClass->affinity == CHeroClass::MIGHT;
+			w.push_back(std::make_shared<CLabel>(center, 114, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
+				hero->heroClass->getNameTranslated() + " - " + (might ? arenaText("draft.might", "Might") : arenaText("draft.magic", "Magic")),
+				HERO_CARD_WIDTH - 8));
 			for(int i = 0; i < GameConstants::PRIMARY_SKILLS; i++)
 			{
-				int x = 22 + 46 * i;
-				w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("PSKIL32"), i, 0, x, 104));
-				w.push_back(std::make_shared<CLabel>(x + 16, 146, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
+				int x = (HERO_CARD_WIDTH - 158) / 2 + 42 * i;
+				w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("PSKIL32"), i, 0, x, 128));
+				w.push_back(std::make_shared<CLabel>(x + 16, 170, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
 					std::to_string(hero->heroClass->primarySkillInitial[i])));
 			}
-			w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("UN44"), hero->imageIndex, 0, CARD_CENTER - 22, 162));
-			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 216, FONT_SMALL, ETextAlignment::CENTER, Colors::YELLOW,
-				hero->getSpecialtyNameTranslated(), ArenaCard::WIDTH - 16));
-			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 242, FONT_MEDIUM, ETextAlignment::CENTER, Colors::WHITE,
-				hero->getNameTranslated(), ArenaCard::WIDTH - 16));
-			w.push_back(std::make_shared<CLabel>(CARD_CENTER, 263, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
-				hero->heroClass->getNameTranslated()));
+			w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("UN44"), hero->imageIndex, 0, center - 22, 186));
+			w.push_back(std::make_shared<CLabel>(center, 240, FONT_SMALL, ETextAlignment::CENTER, Colors::YELLOW,
+				hero->getSpecialtyNameTranslated(), HERO_CARD_WIDTH - 8));
 			auto faction = hero->heroClass->faction;
 			if(faction.hasValue() && faction.toFaction()->hasTown())
+			{
 				w.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("ITPA"),
-					faction.toFaction()->town->clientInfo.icons[true][false] + 2, 0, CARD_CENTER - 24, 284));
+					faction.toFaction()->town->clientInfo.icons[true][false] + 2, 0, center - 24, 256));
+				w.push_back(std::make_shared<CLabel>(center, 308, FONT_SMALL, ETextAlignment::CENTER, Colors::WHITE,
+					faction.toFaction()->getNameTranslated()));
+			}
 		};
 		return offer;
 	}
@@ -363,6 +453,23 @@ namespace
 				Colors::WHITE, art->getDescriptionTranslated()));
 		};
 		return offer;
+	}
+
+	std::string artifactStepTitle(ArtifactPosition slot)
+	{
+		switch(slot.toEnum())
+		{
+			case ArtifactPosition::HEAD: return arenaText("draft.artifact.head", "Choose a Helmet");
+			case ArtifactPosition::NECK: return arenaText("draft.artifact.neck", "Choose a Necklace");
+			case ArtifactPosition::SHOULDERS: return arenaText("draft.artifact.shoulders", "Choose a Cloak");
+			case ArtifactPosition::RIGHT_HAND: return arenaText("draft.artifact.weapon", "Choose a Weapon");
+			case ArtifactPosition::LEFT_HAND: return arenaText("draft.artifact.shield", "Choose a Shield");
+			case ArtifactPosition::TORSO: return arenaText("draft.artifact.torso", "Choose an Armor");
+			case ArtifactPosition::FEET: return arenaText("draft.artifact.feet", "Choose Boots");
+			case ArtifactPosition::RIGHT_RING:
+			case ArtifactPosition::LEFT_RING: return arenaText("draft.artifact.ring", "Choose a Ring");
+			default: return arenaText("draft.artifact.misc", "Choose a Miscellaneous Artifact");
+		}
 	}
 
 	ArenaOffer creatureOffer(CreatureID creatureId, int amount)
@@ -549,12 +656,32 @@ void ArenaDraft::syncPrimarySkills(ArenaSide & side)
 
 // --- step 1: hero ---------------------------------------------------------------------------
 
+std::vector<HeroTypeID> ArenaDraft::offerHeroes(HeroTypeID excluded)
+{
+	// 2 might and 2 magic heroes, each of a different faction
+	auto pool = ArenaRules::heroPool();
+	vstd::erase_if(pool, [excluded](HeroTypeID id) { return id == excluded; }); // the same hero can't be on the map twice
+	std::shuffle(pool.begin(), pool.end(), rng);
+
+	std::vector<HeroTypeID> might;
+	std::vector<HeroTypeID> magic;
+	std::set<FactionID> usedFactions;
+	for(auto id : pool)
+	{
+		const auto * heroClass = id.toHeroType()->heroClass;
+		auto & list = heroClass->affinity == CHeroClass::MIGHT ? might : magic;
+		if(list.size() >= ArenaRules::HERO_OFFERS / 2 || vstd::contains(usedFactions, heroClass->faction))
+			continue;
+		list.push_back(id);
+		usedFactions.insert(heroClass->faction);
+	}
+	might.insert(might.end(), magic.begin(), magic.end());
+	return might;
+}
+
 void ArenaDraft::stepChooseHero()
 {
-	auto pool = ArenaRules::heroPool();
-	if(enemy().hero) // the same hero can't be on the map twice
-		vstd::erase_if(pool, [this](HeroTypeID id) { return id == enemy().hero->getHeroTypeID(); });
-	auto heroes = pickRandom(pool, ArenaRules::OFFERS_PER_PICK);
+	auto heroes = offerHeroes(enemy().hero ? enemy().hero->getHeroTypeID() : HeroTypeID::NONE);
 	std::vector<ArenaOffer> offers;
 	for(auto id : heroes)
 		offers.push_back(heroOffer(id));
@@ -714,31 +841,94 @@ void ArenaDraft::stepSpell()
 
 // --- step 5: artifacts --------------------------------------------------------------------------
 
-std::vector<ArtifactID> ArenaDraft::offerArtifacts(const ArenaSide & side)
+std::vector<ArtifactID> ArenaDraft::offerArtifacts(const ArenaSide & side, ArtifactPosition slot)
 {
-	auto pool = ArenaRules::artifactPool();
+	auto pool = ArenaRules::artifactPool(slot);
 	vstd::erase_if(pool, [&side](ArtifactID art) { return vstd::contains(side.draftedArtifacts, art); });
 	return pickRandom(pool, ArenaRules::OFFERS_PER_PICK);
 }
 
-void ArenaDraft::giveArtifact(ArenaSide & side, ArtifactID artifact)
+void ArenaDraft::giveArtifact(ArenaSide & side, ArtifactID artifact, ArtifactPosition slot)
 {
 	auto * instance = map->createArtifact(artifact);
-	auto position = ArtifactUtils::getArtAnyPosition(side.hero.get(), artifact);
+	auto position = slot;
+	if(side.hero->getArt(position) || !artifact.toArtifact()->canBePutAt(side.hero.get(), position))
+		position = ArtifactUtils::getArtAnyPosition(side.hero.get(), artifact);
 	if(position == ArtifactPosition::PRE_FIRST)
 		position = ArtifactPosition(ArtifactPosition::BACKPACK_START + side.hero->artifactsInBackpack.size());
 	map->putArtifactInstance(*side.hero, instance->getId(), position);
 	side.draftedArtifacts.push_back(artifact);
 }
 
+std::vector<std::string> ArenaDraft::assembleCombinations(ArenaSide & side)
+{
+	// same steps as the game does when a player assembles a combination artifact on the hero screen
+	std::vector<std::string> built;
+	CGHeroInstance * hero = side.hero.get();
+	bool changed = true;
+	while(changed)
+	{
+		changed = false;
+		for(const auto & slot : ArtifactUtils::commonWornSlots())
+		{
+			const CArtifactInstance * art = hero->getArt(slot);
+			if(!art || hero->getSlot(slot)->locked)
+				continue;
+			auto possible = ArtifactUtils::assemblyPossibilities(hero, art->getTypeId(), true);
+			if(possible.empty())
+				continue;
+			const CArtifact * combined = possible.front();
+
+			std::set<ArtifactPosition> partSlots;
+			for(const auto * part : combined->getConstituents())
+				partSlots.insert(hero->getArtPos(part->getId(), true, false));
+			if(vstd::contains(partSlots, ArtifactPosition::PRE_FIRST))
+				continue;
+
+			const auto & combinedSlots = combined->getPossibleSlots().at(ArtBearer::HERO);
+			ArtifactPosition target = ArtifactPosition::PRE_FIRST;
+			for(const auto & partSlot : partSlots)
+				if(vstd::contains(combinedSlots, partSlot))
+				{
+					target = partSlot;
+					break;
+				}
+			if(target == ArtifactPosition::PRE_FIRST)
+				continue;
+
+			auto * combinedInstance = map->createArtifactComponent(combined->getId());
+			for(const auto & partSlot : partSlots)
+			{
+				const CArtifactInstance * part = hero->getArt(partSlot);
+				map->removeArtifactInstance(*hero, partSlot);
+				if(!combined->isFused())
+					combinedInstance->addPart(part, partSlot == target ? ArtifactPosition::PRE_FIRST : partSlot);
+			}
+			map->putArtifactInstance(*hero, combinedInstance->getId(), target);
+			built.push_back(combined->getNameTranslated());
+			changed = true;
+			break;
+		}
+	}
+	return built;
+}
+
 void ArenaDraft::stepArtifact()
 {
 	if(cancelled)
 		return;
-	auto artifacts = offerArtifacts(player());
-	if(artifactPicks >= ArenaRules::ARTIFACT_PICKS || artifacts.empty())
+	const auto & steps = ArenaRules::artifactSteps();
+	if(artifactPicks >= static_cast<int>(steps.size()))
 	{
 		stepArrangeArtifacts();
+		return;
+	}
+	ArtifactPosition slot = steps.at(artifactPicks);
+	auto artifacts = offerArtifacts(player(), slot);
+	if(artifacts.empty()) // nothing (left) for this slot
+	{
+		artifactPicks++;
+		stepArtifact();
 		return;
 	}
 
@@ -749,14 +939,14 @@ void ArenaDraft::stepArtifact()
 	MetaString subtitle;
 	subtitle.appendRawString(arenaText("draft.pickOf", "Pick %d of %d"));
 	subtitle.replaceNumber(artifactPicks + 1);
-	subtitle.replaceNumber(ArenaRules::ARTIFACT_PICKS);
+	subtitle.replaceNumber(static_cast<int>(steps.size()));
 
 	auto self = shared_from_this();
 	ENGINE->windows().createAndPushWindow<ArenaChoiceWindow>(
-		arenaText("draft.chooseArtifact", "Choose an Artifact"), withSideLabel(subtitle.toString()), offers,
-		[self, artifacts](int index)
+		artifactStepTitle(slot), withSideLabel(subtitle.toString()), offers,
+		[self, artifacts, slot](int index)
 		{
-			self->giveArtifact(self->player(), artifacts.at(index));
+			self->giveArtifact(self->player(), artifacts.at(index), slot);
 			self->artifactPicks++;
 			self->stepArtifact();
 		},
@@ -768,10 +958,18 @@ void ArenaDraft::stepArrangeArtifacts()
 {
 	if(cancelled)
 		return;
+	auto built = assembleCombinations(player());
 	auto self = shared_from_this();
 	ENGINE->windows().createAndPushWindow<ArenaHeroWindow>(self, ArenaHeroWindow::EMode::ARRANGE,
 		[self]() { self->stepCreature(); },
 		[self]() { self->cancel(); });
+	if(!built.empty()) // shown on top of the hero screen
+	{
+		std::string text = arenaText("draft.combinationBuilt", "Your drafted parts formed a combination artifact:");
+		for(const auto & name : built)
+			text += "\n" + name;
+		CInfoWindow::showInfoDialog(text, {});
+	}
 }
 
 std::string ArenaDraft::moveArtifact(CGHeroInstance * hero, ArtifactPosition from, ArtifactPosition to)
@@ -824,12 +1022,26 @@ std::string ArenaDraft::moveArtifact(CGHeroInstance * hero, ArtifactPosition fro
 
 // --- step 6: creatures --------------------------------------------------------------------------
 
-std::vector<std::pair<CreatureID, int>> ArenaDraft::offerCreatures(int level)
+std::vector<std::pair<CreatureID, int>> ArenaDraft::offerCreatures(const ArenaSide & side, int level)
 {
-	auto range = ArenaRules::creatureAmount(level);
+	// first card: a creature of the hero's own faction, then creatures of 2 other, different factions
+	FactionID heroFaction = side.hero->getHeroClass()->faction;
+	auto pool = ArenaRules::creaturePool(level);
+	std::shuffle(pool.begin(), pool.end(), rng);
+	std::stable_partition(pool.begin(), pool.end(), [heroFaction](CreatureID id) { return id.toCreature()->getFactionID() == heroFaction; });
+
 	std::vector<std::pair<CreatureID, int>> result;
-	for(auto id : pickRandom(ArenaRules::creaturePool(level), ArenaRules::OFFERS_PER_PICK))
-		result.emplace_back(id, randomInt(range.first, range.second));
+	std::set<FactionID> usedFactions;
+	for(auto id : pool)
+	{
+		if(result.size() >= ArenaRules::OFFERS_PER_PICK)
+			break;
+		FactionID faction = id.toCreature()->getFactionID();
+		if(vstd::contains(usedFactions, faction))
+			continue;
+		usedFactions.insert(faction);
+		result.emplace_back(id, ArenaRules::creatureAmount(id));
+	}
 	return result;
 }
 
@@ -848,7 +1060,7 @@ void ArenaDraft::stepCreature()
 		stepConfirm();
 		return;
 	}
-	auto creatures = offerCreatures(level);
+	auto creatures = offerCreatures(player(), level);
 	if(creatures.empty())
 	{
 		creaturePicks++;
@@ -888,9 +1100,7 @@ void ArenaDraft::draftEnemy()
 	auto & side = enemy();
 
 	// 1. hero: random offers (never the player's hero), take the one with the best starting skills
-	auto pool = ArenaRules::heroPool();
-	vstd::erase_if(pool, [this](HeroTypeID id) { return id == player().hero->getHeroTypeID(); });
-	auto heroes = pickRandom(pool, ArenaRules::OFFERS_PER_PICK);
+	auto heroes = offerHeroes(player().hero->getHeroTypeID());
 	auto heroScore = [](HeroTypeID id)
 	{
 		const auto & s = id.toHeroType()->heroClass->primarySkillInitial;
@@ -929,29 +1139,34 @@ void ArenaDraft::draftEnemy()
 		giveSpell(side, best);
 	}
 
-	// 5. artifacts: most valuable
-	for(int i = 0; i < ArenaRules::ARTIFACT_PICKS; i++)
+	// 5. artifacts: most valuable for each slot, then combinations are built like for the player
+	for(auto slot : ArenaRules::artifactSteps())
 	{
-		auto artifacts = offerArtifacts(side);
+		auto artifacts = offerArtifacts(side, slot);
 		if(artifacts.empty())
-			break;
+			continue;
 		auto best = *std::max_element(artifacts.begin(), artifacts.end(), [](ArtifactID a, ArtifactID b)
 		{
 			return a.toArtifact()->getPrice() < b.toArtifact()->getPrice();
 		});
-		giveArtifact(side, best);
+		giveArtifact(side, best, slot);
 	}
+	assembleCombinations(side);
 
-	// 6. creatures: strongest stack (AI value x amount)
+	// 6. creatures: all offers have the same strength, so take the hero's own faction (better morale),
+	// otherwise the stack with the most hit points
+	FactionID heroFaction = side.hero->getHeroClass()->faction;
 	for(int level = 1; level <= ArenaRules::CREATURE_LEVELS; level++)
 	{
-		auto creatures = offerCreatures(level);
+		auto creatures = offerCreatures(side, level);
 		if(creatures.empty())
 			continue;
-		auto best = *std::max_element(creatures.begin(), creatures.end(), [](const auto & a, const auto & b)
+		auto score = [heroFaction](const std::pair<CreatureID, int> & c)
 		{
-			return static_cast<int64_t>(a.first.toCreature()->getAIValue()) * a.second < static_cast<int64_t>(b.first.toCreature()->getAIValue()) * b.second;
-		});
+			const CCreature * creature = c.first.toCreature();
+			return std::make_pair(creature->getFactionID() == heroFaction, static_cast<int64_t>(creature->getBaseHitPoints()) * c.second);
+		};
+		auto best = *std::max_element(creatures.begin(), creatures.end(), [&](const auto & a, const auto & b) { return score(a) < score(b); });
 		giveCreature(side, level, best.first, best.second);
 	}
 }

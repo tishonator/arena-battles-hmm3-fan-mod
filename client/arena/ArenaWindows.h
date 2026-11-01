@@ -37,6 +37,7 @@ struct ArenaOffer
 	std::function<void(std::vector<std::shared_ptr<CIntObject>> &)> build;
 	std::string description;           // shown under the cards when hovered / selected
 	std::function<void()> popup;        // right click
+	int width = 0;                      // card width, 0 = ArenaCard::WIDTH (narrower cards fit 4 on a screen)
 };
 
 /// Full screen background kept behind all draft windows (hides the lobby)
@@ -77,7 +78,7 @@ public:
 	void hover(bool on) override;
 };
 
-/// Full screen "choose 1 of 3" window, used for heroes, spells, artifacts and creatures
+/// Full screen "choose one card" window (3 cards, 4 for heroes), used for heroes, skills, spells, artifacts and creatures
 class ArenaChoiceWindow : public CWindowObject
 {
 	std::shared_ptr<CFilledTexture> texture;
