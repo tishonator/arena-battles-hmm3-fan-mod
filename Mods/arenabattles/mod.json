@@ -3,7 +3,7 @@
 	"description" : "Arena battles only: pick a hero, skills, artifacts, spells and army, then fight the computer (PvE) or a friend on the same computer (PvP). Custom Arena sets up any battle by hand.",
 	"author" : "Tihomir Ivanov (TishGamer)",
 	"contact" : "https://github.com/tishonator/arena-battles-hmm3-fan-mod",
-	"version" : "0.7.0",
+	"version" : "0.8.0",
 	"modType" : "Interface",
 	"language" : "english",
 
@@ -22,6 +22,11 @@
 			"Artifacts are drafted slot by slot (helmet, necklace, cloak, weapon, shield, armor, boots, 2 rings, 2 misc); drafted parts form combination artifacts automatically; Orb of Inhibition removed",
 			"Armies 10x larger, like the end of a large map; every creature offer has the same total strength (upgraded and stronger creatures come in smaller stacks), no random amounts",
 			"Every creature step offers one creature of the hero's faction and two of other factions"
+		],
+		"0.8.0" : [
+			"PvE difficulty: Easy, Normal, Hard, Expert or Impossible (the original chess-piece icons) scales the computer's creature stacks to 60%, 80%, 100%, 120% or 140% (default Hard, the previous behavior)",
+			"Random button on every draft screen takes a random card at once",
+			"Draft screens explain that a double-click takes a card at once"
 		]
 	},
 

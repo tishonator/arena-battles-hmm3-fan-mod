@@ -52,6 +52,18 @@ namespace ArenaRules
 
 	/// How useful a secondary skill is in an arena battle (used by the computer opponent)
 	int skillBattleValue(SecondarySkill skill);
+
+	/// PvE difficulty: the computer's creature stacks are scaled to this percentage of the normal size
+	struct Difficulty
+	{
+		std::string key;          // text key: draft.difficulty.<key> and draft.difficulty.<key>Info
+		std::string name;         // fallback name
+		std::string info;         // fallback description
+		int enemyArmyPercent;
+		std::string icon;         // difficulty icon of the original new game screen (pawn ... king)
+	};
+	const std::vector<Difficulty> & difficulties();
+	constexpr int DEFAULT_DIFFICULTY = 2; // Hard: equal armies
 }
 
 /// One drafted hero (the player's or the opponent's). The hero object lives on the arena map.
@@ -82,6 +94,8 @@ public:
 	bool isPvP() const { return pvp; }
 	/// true while the first of the two PvP players is drafting
 	bool isFirstPvPDraft() const { return pvp && active == 0; }
+	/// "Difficulty: Hard (enemy army 100%)" in PvE, empty in PvP
+	std::string difficultyText() const;
 	void cancel();
 
 	/// moves an artifact on the hero (equipped slot or backpack) to another position, swapping if needed.
@@ -103,6 +117,7 @@ private:
 	int spellPicks = 0;
 	int artifactPicks = 0;
 	int creaturePicks = 0;
+	int difficulty = ArenaRules::DEFAULT_DIFFICULTY;
 	bool cancelled = false;
 
 	template<typename T>
@@ -117,6 +132,7 @@ private:
 	void stepHandOver();
 
 	// player steps
+	void stepDifficulty(); // PvE only, before the hero
 	void stepChooseHero();
 	void stepSkill();
 	void stepLevelUp();

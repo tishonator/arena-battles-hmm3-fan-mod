@@ -88,6 +88,7 @@ class ArenaChoiceWindow : public CWindowObject
 	std::shared_ptr<CMultiLineLabel> description;
 	std::shared_ptr<CButton> buttonChoose;
 	std::shared_ptr<CButton> buttonCancel;
+	std::shared_ptr<CButton> buttonRandom;
 	std::shared_ptr<CButton> buttonHero;
 	std::shared_ptr<CLabel> labelHero;
 
@@ -97,11 +98,17 @@ class ArenaChoiceWindow : public CWindowObject
 
 	void select(int index);
 	void choose();
+	void chooseRandom();
 	void showDescription(int index);
 
 public:
 	ArenaChoiceWindow(const std::string & titleText, const std::string & subtitleText, std::vector<ArenaOffer> offers,
 		std::function<void(int)> onPick, std::function<void()> onCancel, std::function<void()> onShowHero);
+
+	/// selects a card before the player clicks (e.g. the last used difficulty)
+	void preselect(int index);
+	/// shows or hides the "Random" button (shown by default)
+	void setRandomAllowed(bool allowed);
 };
 
 /// Hero screen (original H3 hero window layout) used to arrange artifacts and to confirm the

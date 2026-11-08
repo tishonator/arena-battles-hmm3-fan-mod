@@ -2,7 +2,7 @@
 
 **Draft a hero, build an army, fight one battle.** Arena Battles is a fan-made arena mode for *Heroes of Might and Magic III*, built on the open-source [VCMI](https://vcmi.eu/) engine. There is no map and no economy, and you won't wait 100 turns. You pick a hero, draft skills, spells, artifacts and creatures one screen at a time, and then everything comes down to one battle.
 
-**⬇️ [Download the latest release (v0.7.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
+**⬇️ [Download the latest release (v0.8.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
 
 > [!CAUTION]
 > **You need your own copy of *Heroes of Might and Magic III: Complete* or *Shadow of Death*.**
@@ -23,6 +23,7 @@
 - [How a draft works](#how-a-draft-works)
   - [Choosing your skills](#choosing-your-skills)
   - [Fair picks: heroes, artifacts and armies](#fair-picks-heroes-artifacts-and-armies)
+  - [Difficulty and faster drafting](#difficulty-and-faster-drafting)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
   - [Before you start: the original game data](#1-before-you-start-the-original-game-data)
@@ -52,7 +53,8 @@
 - **A full draft in about 10 minutes.** Pick 1 of 4 heroes (always 2 might and 2 magic heroes) and fill all 8 skill slots with **battle skills only**. Your hero then jumps to level 25 with every skill at Expert. Then choose 9 spells, 11 artifacts (one for each slot) and 7 creature stacks.
 - **No useless picks.** You'll never be offered Estates, Scouting or Navigation, heroes whose specialty is gold or Logistics, the Earthquake spell, or other things that do nothing in a single battle.
 - **Big, balanced armies.** Armies are about the size you'd have at the end of a large map, and every creature offer has the same total strength: upgraded and stronger creatures come in smaller stacks, with no random amounts.
-- **A smart AI opponent.** In PvE, the computer drafts the same way you do and always takes the strongest offer.
+- **A smart AI opponent with 5 difficulty levels.** In PvE, the computer drafts the same way you do and always takes the strongest offer. Easy, Normal, Hard, Expert or Impossible sets the size of its army (60% to 140% of yours).
+- **Draft as fast as you like.** Double-click a card to take it at once, or press **Random** to let the game pick for you.
 - **Fair fights.** Quick combat is off, both sides get the same number of picks, and the battlefield is random.
 - **Original HoMM3 look and feel.** The mod runs on your own copy of the game data, so it has the classic creatures, spells, artifacts, music and battle screen.
 - **Runs everywhere VCMI runs:** Windows, macOS, Linux, Android and iOS.
@@ -62,12 +64,14 @@
 
 | Menu item | What it is |
 | --- | --- |
-| **New Arena PvE** | You draft a hero and army. The computer drafts its own, then you fight it. |
+| **New Arena PvE** | Choose a difficulty, then draft a hero and army. The computer drafts its own, then you fight it. |
 | **New Arena PvP** | Two players take turns drafting on the same computer (Player 1, then Player 2). Then they fight each other in hotseat. |
 | **Custom Arena** | A sandbox. Pick both heroes, their skills, artifacts and **any creatures in any amounts**. Player 2 can be a **Human** or the **Computer**. It is good for testing formations, "creature vs creature" match-ups and theory-crafting. |
 | **Credits** | Who made this, and the engine and game credits. |
 
 ## How a draft works
+
+In PvE you first choose a difficulty: Easy, Normal, Hard, Expert or Impossible (see [Difficulty and faster drafting](#difficulty-and-faster-drafting)). Then:
 
 1. **Choose your hero.** You get 4 random heroes: 2 might and 2 magic heroes, each from a different faction. Every hero starts with a spell book.
 2. **Choose your skills.** A hero has 8 skill slots, and you fill them one screen at a time, taking 1 of 3 skills each time.
@@ -140,6 +144,29 @@ Heroes with a creature, spell or battle-skill specialty stay, so a Galthran stil
 
 The computer opponent follows the same rules. It takes the most valuable artifact for each slot and prefers creatures from its own faction.
 
+### Difficulty and faster drafting
+
+Version 0.8.0 adds difficulty levels for PvE and fewer clicks for everyone.
+
+![Choose a difficulty](arena-battles/screenshots/choose-difficulty.png)
+
+**Difficulty.** Before a PvE draft you choose how big the computer's army is, with the 5 difficulty levels and chess-piece icons of the original game. Only its creature stacks change. Its hero, skills, spells and artifacts are drafted as usual.
+
+| Difficulty | Computer's army | Good for                                           |
+| ---------- | --------------- | -------------------------------------------------- |
+| Easy       | 60%             | learning the game and practicing tactics           |
+| Normal     | 80%             | a relaxed battle                                   |
+| **Hard**   | **100%**        | equal armies (the default, as in earlier versions) |
+| Expert     | 120%            | experienced players                                |
+| Impossible | 140%            | masters only                                       |
+
+The game remembers your choice until you close it, and the confirm screen shows the difficulty before you press **Begin**.
+
+**Faster drafting.**
+
+- **Double-click** a card to take it at once, without pressing the OK button.
+- Press **Random** on any draft screen to take a random card. Press it on every screen for a quick, fully random draft.
+
 ## Screenshots
 
 | | |
@@ -183,7 +210,7 @@ Arena Battles uses the same game data as VCMI. **If you already play VCMI on a c
 
 ### 2. Download
 
-Open the **[latest release (v0.7.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.7.0`):
+Open the **[latest release (v0.8.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.8.0`):
 
 | System | File | Notes |
 | --- | --- | --- |
@@ -290,8 +317,8 @@ The `Mods/arenabattles` folder is installed with the engine automatically. On de
 - **Making a release:** push the commit to `arena-battles`, then push a version tag for it. CI builds everything and **publishes the GitHub Release** with all the packages attached. The tag build replaces the branch build of the same commit.
   ```sh
   git push origin arena-battles
-  git tag v0.7.0
-  git push origin v0.7.0
+  git tag v0.8.0
+  git push origin v0.8.0
   ```
 - If a platform fails (for example when no macOS runner is free), the release is still published with the other packages. Use **Re-run failed jobs** on that run to add the missing files to the same release.
 - Code signing is optional:

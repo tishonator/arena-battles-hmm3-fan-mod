@@ -308,6 +308,19 @@ int ArenaRules::skillBattleValue(SecondarySkill skill)
 	return it == values.end() ? 1 : it->second;
 }
 
+const std::vector<ArenaRules::Difficulty> & ArenaRules::difficulties()
+{
+	// the 5 difficulty levels and icons of the original game (pawn, knight, rook, queen, king)
+	static const std::vector<Difficulty> list = {
+		{"easy", "Easy", "The computer's creature stacks are 60% of the normal size. Good for learning and practicing tactics.", 60, "GSPBUT3"},
+		{"normal", "Normal", "The computer's creature stacks are 80% of the normal size.", 80, "GSPBUT4"},
+		{"hard", "Hard", "Equal armies: the computer's creature stacks are as large as yours.", 100, "GSPBUT5"},
+		{"expert", "Expert", "The computer's creature stacks are 20% larger than yours. For experienced players.", 120, "GSPBUT6"},
+		{"impossible", "Impossible", "The computer's creature stacks are 40% larger than yours. For masters only.", 140, "GSPBUT7"},
+	};
+	return list;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Card builders for the choice screens
 // ---------------------------------------------------------------------------------------------
@@ -317,6 +330,7 @@ namespace
 	using Widgets = std::vector<std::shared_ptr<CIntObject>>;
 	constexpr int CARD_CENTER = ArenaCard::WIDTH / 2;
 	constexpr int HERO_CARD_WIDTH = 182; // 4 cards + gaps fit the 800 pixel wide window
+	constexpr int DIFFICULTY_CARD_WIDTH = 140; // 5 cards + gaps fit the 800 pixel wide window
 
 	std::string artifactClassText(const CArtifact * art)
 	{
@@ -328,6 +342,40 @@ namespace
 			case EArtifactClass::ART_RELIC: return arenaText("draft.artifactClass.relic", "Relic");
 			default: return "";
 		}
+	}
+
+	std::string difficultyName(const ArenaRules::Difficulty & d)
+	{
+		return arenaText("draft.difficulty." + d.key, d.name);
+	}
+
+	std::string enemyArmyText(const ArenaRules::Difficulty & d)
+	{
+		return arenaText("draft.enemyArmy", "Enemy army") + ": " + std::to_string(d.enemyArmyPercent) + "%";
+	}
+
+	ArenaOffer difficultyOffer(const ArenaRules::Difficulty & d)
+	{
+		ArenaOffer offer;
+		std::string info = arenaText("draft.difficulty." + d.key + "Info", d.info);
+		offer.description = difficultyName(d) + " - " + enemyArmyText(d);
+		offer.width = DIFFICULTY_CARD_WIDTH;
+		offer.build = [d, info](Widgets & w)
+		{
+			constexpr int center = DIFFICULTY_CARD_WIDTH / 2;
+			w.push_back(std::make_shared<CLabel>(center, 22, FONT_BIG, ETextAlignment::CENTER, Colors::YELLOW, difficultyName(d),
+				DIFFICULTY_CARD_WIDTH - 8));
+			// the original difficulty icon, shown twice as large
+			auto image = ENGINE->renderHandler().loadImage(AnimationPath::builtin(d.icon), 0, 0, EImageBlitMode::COLORKEY);
+			Point size = image->dimensions() * 2;
+			image->scaleTo(size, EScalingAlgorithm::NEAREST);
+			w.push_back(std::make_shared<CPicture>(image, Point(center - size.x / 2, 48)));
+			w.push_back(std::make_shared<CLabel>(center, 172, FONT_MEDIUM, ETextAlignment::CENTER, Colors::YELLOW, enemyArmyText(d),
+				DIFFICULTY_CARD_WIDTH - 8));
+			w.push_back(std::make_shared<CMultiLineLabel>(Rect(8, 192, DIFFICULTY_CARD_WIDTH - 16, 128), FONT_SMALL, ETextAlignment::TOPCENTER,
+				Colors::WHITE, info));
+		};
+		return offer;
 	}
 
 	ArenaOffer heroOffer(HeroTypeID heroId)
@@ -603,7 +651,49 @@ void ArenaDraft::start()
 	backdrop = window;
 	ENGINE->windows().pushWindow(window);
 
-	stepChooseHero();
+	if(pvp)
+		stepChooseHero();
+	else
+		stepDifficulty();
+}
+
+namespace
+{
+	int lastDifficulty = ArenaRules::DEFAULT_DIFFICULTY; // remembered while the game runs
+}
+
+std::string ArenaDraft::difficultyText() const
+{
+	if(pvp)
+		return "";
+	const auto & d = ArenaRules::difficulties().at(difficulty);
+	return arenaText("draft.difficulty", "Difficulty") + ": " + difficultyName(d) + " (" + enemyArmyText(d) + ")";
+}
+
+// --- step 0 (PvE): difficulty ---------------------------------------------------------------------
+
+void ArenaDraft::stepDifficulty()
+{
+	std::vector<ArenaOffer> offers;
+	for(const auto & d : ArenaRules::difficulties())
+		offers.push_back(difficultyOffer(d));
+
+	auto self = shared_from_this();
+	auto window = std::make_shared<ArenaChoiceWindow>(
+		arenaText("draft.chooseDifficulty", "Choose Difficulty"),
+		arenaText("draft.chooseDifficultyHint", "The computer's army size depends on the difficulty"),
+		offers,
+		[self](int index)
+		{
+			self->difficulty = index;
+			lastDifficulty = index;
+			self->stepChooseHero();
+		},
+		[self]() { self->cancel(); },
+		nullptr);
+	window->preselect(lastDifficulty);
+	window->setRandomAllowed(false);
+	ENGINE->windows().pushWindow(window);
 }
 
 void ArenaDraft::closeBackdrop()
@@ -1167,7 +1257,10 @@ void ArenaDraft::draftEnemy()
 			return std::make_pair(creature->getFactionID() == heroFaction, static_cast<int64_t>(creature->getBaseHitPoints()) * c.second);
 		};
 		auto best = *std::max_element(creatures.begin(), creatures.end(), [&](const auto & a, const auto & b) { return score(a) < score(b); });
-		giveCreature(side, level, best.first, best.second);
+		// difficulty: the stack is scaled (PvE only, the computer drafts only in PvE)
+		int percent = ArenaRules::difficulties().at(difficulty).enemyArmyPercent;
+		int amount = std::max(1, static_cast<int>((static_cast<int64_t>(best.second) * percent + 50) / 100));
+		giveCreature(side, level, best.first, amount);
 	}
 }
 

@@ -27,6 +27,7 @@
 
 #include "../../lib/GameLibrary.h"
 #include "../../lib/CCreatureHandler.h"
+#include "../../lib/CRandomGenerator.h"
 #include "../../lib/CSkillHandler.h"
 #include "../../lib/entities/artifact/ArtifactUtils.h"
 #include "../../lib/entities/artifact/CArtifact.h"
@@ -139,6 +140,14 @@ void ArenaCard::hover(bool on)
 // ArenaChoiceWindow
 // ---------------------------------------------------------------------------------------------
 
+namespace
+{
+	std::string clickHint()
+	{
+		return arenaText("draft.clickHint", "Click a card to select it, double-click to take it at once. Right-click for details.");
+	}
+}
+
 ArenaChoiceWindow::ArenaChoiceWindow(const std::string & titleText, const std::string & subtitleText, std::vector<ArenaOffer> offersList,
 	std::function<void(int)> onPickCallback, std::function<void()> onCancel, std::function<void()> onShowHero)
 	: CWindowObject(BORDERED)
@@ -190,6 +199,13 @@ ArenaChoiceWindow::ArenaChoiceWindow(const std::string & titleText, const std::s
 				}, 0);
 		}, EShortcut::GLOBAL_CANCEL);
 
+	// takes a random card at once (fewer clicks for players who don't mind)
+	buttonRandom = std::make_shared<CButton>(Point(150, 535), AnimationPath::builtin("GSPBUT2"),
+		CButton::tooltip(arenaText("draft.randomHelp", "Take a random card")), [this]() { chooseRandom(); });
+	buttonRandom->setTextOverlay(arenaText("draft.random", "Random"), FONT_SMALL, Colors::WHITE);
+
+	description->setText(clickHint());
+
 	if(onShowHero)
 	{
 		buttonHero = std::make_shared<CButton>(Point(pos.w - 40 - 128, 535), AnimationPath::builtin("GSPBUT2"),
@@ -211,8 +227,32 @@ void ArenaChoiceWindow::select(int index)
 
 void ArenaChoiceWindow::showDescription(int index)
 {
-	description->setText(index >= 0 && index < offers.size() ? offers[index].description : "");
+	if(index >= 0 && index < offers.size())
+		description->setText(offers[index].description);
+	else
+		description->setText(clickHint());
 	redraw();
+}
+
+void ArenaChoiceWindow::chooseRandom()
+{
+	if(cards.empty())
+		return;
+	select(CRandomGenerator::getDefault().nextInt(0, static_cast<int>(cards.size()) - 1));
+	choose();
+}
+
+void ArenaChoiceWindow::preselect(int index)
+{
+	select(index);
+}
+
+void ArenaChoiceWindow::setRandomAllowed(bool allowed)
+{
+	if(allowed)
+		buttonRandom->enable();
+	else
+		buttonRandom->disable();
 }
 
 void ArenaChoiceWindow::choose()
@@ -323,7 +363,7 @@ ArenaHeroWindow::ArenaHeroWindow(std::shared_ptr<ArenaDraft> draftPtr, EMode mod
 	hint->setText(draft->isFirstPvPDraft() && mode == EMode::CONFIRM
 		? arenaText("pvp.confirmHint", "Check your hero, then press Done. The next player drafts after you.")
 		: mode == EMode::CONFIRM
-		? arenaText("hero.confirmHint", "Check your hero, then press Begin.")
+		? arenaText("hero.confirmHint", "Check your hero, then press Begin.") + (draft->isPvP() ? "" : "\n" + draft->difficultyText())
 		: mode == EMode::LEVELED
 		? arenaText("hero.leveledHint", "Your hero reached level 25 and all skills are Expert. Press Done to draft spells.")
 		: arenaText("hero.arrangeHint", "Click an artifact, then a slot to move it."));
