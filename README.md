@@ -2,7 +2,7 @@
 
 **Draft a hero, build an army, fight one battle.** Arena Battles is a fan-made arena mode for *Heroes of Might and Magic III*, built on the open-source [VCMI](https://vcmi.eu/) engine. There is no map and no economy, and you won't wait 100 turns. You pick a hero, draft skills, spells, artifacts and creatures one screen at a time, and then everything comes down to one battle.
 
-**⬇️ [Download the latest release (v0.8.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
+**⬇️ [Download the latest release (v0.8.1)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** for Windows, macOS, Linux and Android.
 
 > [!CAUTION]
 > **You need your own copy of *Heroes of Might and Magic III: Complete* or *Shadow of Death*.**
@@ -210,7 +210,7 @@ Arena Battles uses the same game data as VCMI. **If you already play VCMI on a c
 
 ### 2. Download
 
-Open the **[latest release (v0.8.0)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.8.0`):
+Open the **[latest release (v0.8.1)](https://github.com/tishonator/arena-battles-hmm3-fan-mod/releases/latest)** and download the file for your system (`<version>` is the release version, e.g. `v0.8.1`):
 
 | System | File | Notes |
 | --- | --- | --- |
@@ -296,6 +296,7 @@ For more help with the game data, see the official VCMI guides. Arena Battles us
 | I only have the Steam HD Edition | The HD Edition alone doesn't have the files Arena Battles needs. You need *HoMM3 Complete* (e.g. from GOG) or *Shadow of Death*. |
 | The normal VCMI menu appears instead of Arena Battles | You started the official VCMI, not Arena Battles. Use the **VCMI Arena Battles** shortcut. |
 | The game starts in a small window | Change the resolution and fullscreen settings in the launcher (*Settings*) or in-game (*Esc → System options*). |
+| "Resource with name MAPS/ARENABATTLES ... wasn't found" when a battle starts | Fixed in v0.8.1, please update. On older versions, restart the game and start the battle again (the first attempt creates the missing `Maps` folder in the VCMI user folder). |
 | Something else went wrong | Open an [issue](https://github.com/tishonator/arena-battles-hmm3-fan-mod/issues) and attach `VCMI_Client_log.txt` from the `logs` folder inside the VCMI user folder. |
 
 ---
@@ -317,8 +318,8 @@ The `Mods/arenabattles` folder is installed with the engine automatically. On de
 - **Making a release:** push the commit to `arena-battles`, then push a version tag for it. CI builds everything and **publishes the GitHub Release** with all the packages attached. The tag build replaces the branch build of the same commit.
   ```sh
   git push origin arena-battles
-  git tag v0.8.0
-  git push origin v0.8.0
+  git tag v0.8.1
+  git push origin v0.8.1
   ```
 - If a platform fails (for example when no macOS runner is free), the release is still published with the other packages. Use **Re-run failed jobs** on that run to add the missing files to the same release.
 - Code signing is optional:

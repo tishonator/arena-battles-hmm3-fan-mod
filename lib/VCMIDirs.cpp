@@ -61,6 +61,9 @@ void IVCMIDirs::init()
 	bfs::create_directories(userConfigPath());
 	bfs::create_directories(userLogsPath());
 	bfs::create_directories(userSavePath());
+	// Arena Battles: the arena map is written here before every battle. Folders are only mounted
+	// into the game's filesystem if they exist at startup, so create it before the filesystem is loaded.
+	bfs::create_directories(userDataPath() / "Maps");
 }
 
 #ifdef VCMI_WINDOWS

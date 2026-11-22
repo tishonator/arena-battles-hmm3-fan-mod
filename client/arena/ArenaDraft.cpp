@@ -46,6 +46,7 @@
 #include "../../lib/entities/hero/CHero.h"
 #include "../../lib/entities/hero/CHeroClass.h"
 #include "../../lib/entities/hero/CHeroHandler.h"
+#include "../../lib/filesystem/CFilesystemLoader.h"
 #include "../../lib/filesystem/Filesystem.h"
 #include "../../lib/mapObjectConstructors/AObjectTypeHandler.h"
 #include "../../lib/mapObjectConstructors/CObjectClassesHandler.h"
@@ -1351,9 +1352,25 @@ void ArenaDraft::startBattle()
 
 	auto path = VCMIDirs::get().userDataPath() / "Maps";
 	boost::filesystem::create_directories(path);
+	const auto mapFile = path / "ArenaBattles.vmap";
 	CMapService mapService;
-	mapService.saveMap(map, path / "ArenaBattles.vmap");
+	mapService.saveMap(map, mapFile);
+	boost::system::error_code ec;
+	if(!boost::filesystem::exists(mapFile, ec) || boost::filesystem::file_size(mapFile, ec) == 0)
+		throw std::runtime_error("Could not write the arena map to " + mapFile.string()
+			+ ". Check that this folder can be written (on Windows, Controlled folder access or OneDrive may block it).");
+
 	CResourceHandler::get()->updateFilteredFiles([](const std::string &) { return true; });
+
+	// The Maps folder is only part of the game's filesystem if it existed when the game started.
+	// If it was missing then, mount it now so the map just written can be found.
+	const ResourcePath mapResource("Maps/ArenaBattles", EResType::MAP);
+	if(!CResourceHandler::get()->existsResource(mapResource))
+	{
+		logGlobal->warn("Arena map folder %s was not mounted, mounting it now", path.string());
+		CResourceHandler::addFilesystem("data", "arenaBattlesMaps", std::make_unique<CFilesystemLoader>("MAPS/", path, 0));
+		CResourceHandler::get()->updateFilteredFiles([](const std::string &) { return true; });
+	}
 
 	closeBackdrop();
 
